@@ -26,7 +26,7 @@ const todoSchema = mongoose.Schema(
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "users",
-      require: [true, "the user id is required"],
+      required: [true, "the user id is required"],
     },
     deadline: {
       type: Date,
