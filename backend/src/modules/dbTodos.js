@@ -44,6 +44,12 @@ const todoSchema = mongoose.Schema(
       enum: ["low", "medium", "high"],
       default: "medium",
     },
+    assignTo: [
+      {
+        type: mongoose.Types.ObjectId,
+        ref: "users",
+      },
+    ],
   },
   { timestamps: true },
 );
