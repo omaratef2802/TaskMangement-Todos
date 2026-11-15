@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+
 const todoSchema = mongoose.Schema(
   {
     type: {
@@ -8,9 +9,10 @@ const todoSchema = mongoose.Schema(
     },
     title: {
       type: String,
-      required: [true, "this titile is required"],
+      required: [true, "Title is required"],
       minLength: 4,
       maxLength: 100,
+      trim: true,
     },
     status: {
       type: String,
@@ -22,25 +24,25 @@ const todoSchema = mongoose.Schema(
       default: "",
     },
     userId: {
-      type: mongoose.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "users",
     },
     deadline: {
       type: Date,
-      default: new Date(),
     },
     completedAt: {
       type: Date,
-      default: new Date(),
+      default: null,
     },
     category: {
       type: String,
       default: "general",
+      trim: true,
     },
     priority: {
       type: String,
       enum: ["low", "medium", "high"],
-      default: "meduim",
+      default: "medium",
     },
   },
   { timestamps: true },
