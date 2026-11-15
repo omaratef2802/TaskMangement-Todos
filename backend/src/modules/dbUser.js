@@ -21,6 +21,7 @@ const userSchmea = mongoose.Schema(
       type: String,
       required: [true, "this mail is required"],
       lowercase: true,
+      trim: true,
       validate: {
         validator: (email) =>
           /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email),
