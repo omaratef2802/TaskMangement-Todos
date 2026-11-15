@@ -1,10 +1,14 @@
 const mongoose = require("mongoose");
 const todoSchema = mongoose.Schema(
   {
+    type: {
+      type: String,
+      enum: ["task", "todo"],
+      default: "todo",
+    },
     title: {
       type: String,
       required: [true, "this titile is required"],
-      unique: [true, "this todo must be unique"],
       minLength: 4,
       maxLength: 100,
     },
@@ -29,17 +33,17 @@ const todoSchema = mongoose.Schema(
       type: Date,
       default: new Date(),
     },
-    catogry: {
+    category: {
       type: String,
       default: "general",
     },
     priority: {
       type: String,
-      enum: ["low", "meduim", "high"],
+      enum: ["low", "medium", "high"],
       default: "meduim",
     },
   },
-  { timestapms: true },
+  { timestamps: true },
 );
 
 const todoModule = mongoose.model("todos", todoSchema);
