@@ -15,6 +15,7 @@ const todoSchema = mongoose.Schema(
     },
     description: {
       type: String,
+      default: "",
     },
     userId: {
       type: mongoose.Types.ObjectId,
@@ -22,6 +23,20 @@ const todoSchema = mongoose.Schema(
     },
     deadline: {
       type: Date,
+      default: new Date(),
+    },
+    completedAt: {
+      type: Date,
+      default: new Date(),
+    },
+    catogry: {
+      type: String,
+      default: "general",
+    },
+    priority: {
+      type: String,
+      enum: ["low", "meduim", "high"],
+      default: "meduim",
     },
   },
   { timestapms: true },

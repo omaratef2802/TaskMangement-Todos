@@ -6,6 +6,7 @@ const users = require("./routers/users");
 const todos = require("./routers/todos");
 
 app.use("/api/user/", users);
+app.use("/api/todo/", todos);
 
 app.use("/api/user", users);
 app.use("/api/todo", todos);

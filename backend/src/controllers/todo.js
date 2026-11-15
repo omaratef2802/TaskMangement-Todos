@@ -88,10 +88,19 @@ const clearTodo = async (req, res, next) => {
 };
 const updateTodo = async (req, res, next) => {
   try {
-    // const {title , status , }
   } catch (err) {
     next(new ApiError(404, err.message));
   }
 };
 
-module.exports = {};
+module.exports = {
+  createTodo,
+  getTodoByTitle,
+  getTodoByStatus,
+  getTodoById,
+  getTodos,
+  getAllTodos,
+  deleteTodo,
+  clearTodo,
+  updateTodo,
+};
