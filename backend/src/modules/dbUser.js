@@ -17,6 +17,13 @@ const userSchmea = mongoose.Schema(
       minLength: 3,
       maxLength: 30,
     },
+    username: {
+      type: String,
+      required: [true, "the username is required"],
+      unique: [true, "the username must be unique"],
+      minLength: 5,
+      maxLength: 100,
+    },
     mail: {
       type: String,
       required: [true, "this mail is required"],
@@ -29,6 +36,10 @@ const userSchmea = mongoose.Schema(
       },
       unique: [true, "the email must be unique"],
     },
+    image: {
+      type: String,
+      default: "",
+    },
     password: {
       type: String,
       required: function () {
@@ -39,6 +50,9 @@ const userSchmea = mongoose.Schema(
       type: String,
       enum: ["local", "google"],
       default: "local",
+    },
+    googleId: {
+      type: Number,
     },
     role: {
       type: String,

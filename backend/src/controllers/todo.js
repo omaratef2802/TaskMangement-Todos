@@ -14,7 +14,7 @@ const createTodo = async (req, res, next) => {
   try {
     const todo = req.body;
     todo.userId = req.id;
-    res.status(201).json({ message: "success", data: createTodos(todo) });
+    res.status(201).json({ message: "success", data: await createTodos(todo) });
   } catch (err) {
     next(new ApiError(404, err.message));
   }
