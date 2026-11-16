@@ -13,7 +13,7 @@ const userSchmea = mongoose.Schema(
     lname: {
       type: String,
       trim: true,
-      required: [true, "first name is required"],
+      required: [true, "Last name is required"],
       minLength: 3,
       maxLength: 30,
     },
@@ -52,7 +52,7 @@ const userSchmea = mongoose.Schema(
       default: "local",
     },
     googleId: {
-      type: Number,
+      type: String,
     },
     role: {
       type: String,
