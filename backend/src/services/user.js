@@ -4,6 +4,7 @@ const genToken = require("../utils/gnToken");
 const ApiError = require("../utils/ApiError");
 const sendEmail = require("../utils/sendEmail");
 const dbOtp = require("../modules/dbOTP");
+const uploadImage = require("../utils/uploadImage");
 
 const createUser = async (info) => {
   const user = await dbUser.create(info);
@@ -115,6 +116,16 @@ const resetPassword = async (userId, newPassword) => {
   return { message: "Password reset successfully" };
 };
 
+const uploadUserImage = async (id, file) => {
+  const user = await dbUser.findById(id);
+  if (!user) throw new ApiError(404, "User not found");
+
+  const result = await uploadImage(file, id);
+  user.image = result.secure_url;
+
+  return user;
+};
+
 module.exports = {
   createUser,
   Login,
@@ -126,4 +137,5 @@ module.exports = {
   forgetPassword,
   verifyOTP,
   resetPassword,
+  uploadUserImage,
 };

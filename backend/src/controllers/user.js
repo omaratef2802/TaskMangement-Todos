@@ -11,6 +11,7 @@ const {
   forgetPassword,
   resetPassword,
   verifyOTP,
+  uploadUserImage,
 } = require("../services/user");
 
 const register = async (req, res, next) => {
@@ -159,6 +160,21 @@ const ResetPassword = async (req, res, next) => {
   }
 };
 
+const uploadImageUser = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      throw new ApiError(400, "Please upload an image");
+    }
+    const user = await uploadUserImage(req.id, req.file);
+    res.status(200).json({
+      message: "Image uploaded successfully",
+      data: user,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   getUserById,
   getUsers,
@@ -170,4 +186,5 @@ module.exports = {
   ForgetPassword,
   VerifyOTP,
   ResetPassword,
+  uploadImageUser,
 };

@@ -31,4 +31,4 @@ const authResetPassword = (stage) => {
   };
 };
 
-module.exports = authResetPassword;
+module.exports = { authResetPassword };
