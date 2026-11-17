@@ -12,6 +12,7 @@ const {
   resetPassword,
   verifyOTP,
   uploadUserImage,
+  googleLoginServices,
 } = require("../services/user");
 
 const register = async (req, res, next) => {
@@ -40,6 +41,18 @@ const login = async (req, res, next) => {
       .json({ message: "success", data: await Login(mail, password) });
   } catch (err) {
     return next(new ApiError(500, err.message));
+  }
+};
+
+const googleAuthCallback = async (req, res, next) => {
+  try {
+    const data = await googleLoginServices(req.user);
+    res.status(200).json({
+      message: "Google login successful",
+      data,
+    });
+  } catch (err) {
+    next(err);
   }
 };
 
@@ -187,4 +200,5 @@ module.exports = {
   VerifyOTP,
   ResetPassword,
   uploadImageUser,
+  googleAuthCallback,
 };

@@ -10,17 +10,32 @@ const createUser = async (info) => {
   const user = await dbUser.create(info);
   return user;
 };
+
 const Login = async (mail, password) => {
   const user = await dbUser.findOne({ mail });
-  if (!user) throw new ApiError(404, "password or mail is not corrects");
 
+  if (!user || !user.password)
+    throw new ApiError(404, "password or mail is not correct");
   const verify = await bcrypt.compare(password, user.password);
-  if (!verify) throw new ApiError(404, "password or mail is not corrects");
+  if (!verify) throw new ApiError(404, "password or mail is not correct");
 
   return genToken(process.env.SECRET, "1w", {
     userId: user._id,
     role: user.role,
   });
+};
+
+const googleLoginServices = async (user) => {
+  if (!user) throw new ApiError(401, "Google authentication failed");
+
+  const token = genToken(process.env.SECRET, "1w", {
+    userId: user._id,
+    role: user.role,
+  });
+
+  return {
+    token,
+  };
 };
 
 const getUserByID = async (id) => {
@@ -122,7 +137,7 @@ const uploadUserImage = async (id, file) => {
 
   const result = await uploadImage(file, id);
   user.image = result.secure_url;
-
+  await user.save();
   return user;
 };
 
@@ -138,4 +153,5 @@ module.exports = {
   verifyOTP,
   resetPassword,
   uploadUserImage,
+  googleLoginServices,
 };
