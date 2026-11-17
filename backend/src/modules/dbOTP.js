@@ -15,10 +15,6 @@ const otpShema = mongoose.Schema(
       type: Date,
       required: [true, "the expiredAt is reuqied"],
     },
-    isVerified: {
-      type: Boolean,
-      default: false,
-    },
   },
   { timestamps: true },
 );

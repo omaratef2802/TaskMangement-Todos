@@ -63,7 +63,7 @@ const forgetPassword = async (mail) => {
   const user = await dbUser.findOne({ mail });
   if (!user) throw new ApiError(404, "the user not found");
   if (user.authProvider === "google")
-    throw new ApiError("this user use account of google");
+    throw new ApiError(404, "this user use account of google");
 
   await dbOtp.deleteMany({ userId: user._id });
   const otpGen = Math.floor(100000 + Math.random() * 900000).toString();
