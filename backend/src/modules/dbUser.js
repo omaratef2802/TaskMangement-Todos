@@ -22,6 +22,7 @@ const userSchmea = mongoose.Schema(
       required: [true, "the username is required"],
       unique: [true, "the username must be unique"],
       minLength: 5,
+      trim: true,
       maxLength: 100,
     },
     mail: {

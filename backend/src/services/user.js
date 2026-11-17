@@ -2,6 +2,8 @@ const dbUser = require("../modules/dbUser");
 const bcrypt = require("bcrypt");
 const genToken = require("../utils/gnToken");
 const ApiError = require("../utils/ApiError");
+const sendEmail = require("../utils/sendEmail");
+const dbOtp = require("../modules/dbOTP");
 
 const createUser = async (info) => {
   const user = await dbUser.create(info);
@@ -24,7 +26,8 @@ const getUserByID = async (id) => {
   return await dbUser.findById(id);
 };
 
-const getAllUsers = async (skip = 0, limit = 10) => {
+const getAllUsers = async (page = 1, limit = 10) => {
+  const skip = (page - 1) * limit;
   return await dbUser.find().limit(limit).skip(skip);
 };
 
@@ -56,6 +59,62 @@ const deleteuserFun = async (id) => {
   return await dbUser.findByIdAndDelete(id);
 };
 
+const forgetPassword = async (mail) => {
+  const user = await dbUser.findOne({ mail });
+  if (!user) throw new ApiError(404, "the user not found");
+  if (user.authProvider === "google")
+    throw new ApiError("this user use account of google");
+
+  await dbOtp.deleteMany({ userId: user._id });
+  const otpGen = Math.floor(100000 + Math.random() * 900000).toString();
+  const OTP = {
+    otp: otpGen,
+    userId: user._id,
+    expireAt: new Date(Date.now() + 60 * 1000 * 15),
+  };
+  await dbOtp.create(OTP);
+  await sendEmail(
+    mail,
+    "Password Reset OTP",
+    `<h2>Password reset</h2><p>Hello ${user.fname}</p><h1>${otpGen}</h1><p>This OTP expires in 15 minutes.</p>`,
+  );
+  return genToken(process.env.RESET_PASSWORD_SECRET, "15m", {
+    userId: user._id,
+    resetPassword: true,
+  });
+};
+
+const verifyOTP = async (userId, otp) => {
+  const otpDb = await dbOtp.findOne({ userId });
+  if (!otpDb) {
+    throw new ApiError(404, "OTP not found or expired");
+  }
+  if (otpDb.expireAt < new Date()) {
+    await dbOtp.deleteOne({ _id: otpDb._id });
+    throw new ApiError(400, "OTP expired");
+  }
+  if (otpDb.otp !== String(otp)) {
+    throw new ApiError(400, "The OTP is incorrect");
+  }
+
+  await dbOtp.deleteOne({ _id: otpDb._id });
+  return genToken(process.env.RESET_PASSWORD_SECRET, "15m", {
+    userId,
+    resetPassword: true,
+    otpVerified: true,
+  });
+};
+
+const resetPassword = async (userId, newPassword) => {
+  const user = await dbUser.findById(userId);
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+  user.password = newPassword;
+  await user.save();
+  return { message: "Password reset successfully" };
+};
+
 module.exports = {
   createUser,
   Login,
@@ -64,4 +123,7 @@ module.exports = {
   getAllUsers,
   updatePassw,
   deleteuserFun,
+  forgetPassword,
+  verifyOTP,
+  resetPassword,
 };
