@@ -12,7 +12,7 @@ const editableFields = [
   "priority",
 ];
 
-const createTodos = async (todo, userId) => {
+const createTodos = async (todo = {}, userId) => {
   const todoData = {};
   for (const field of editableFields) {
     if (todo[field] !== undefined) todoData[field] = todo[field];
@@ -29,7 +29,9 @@ const getTodoByTitleService = async (title, userId) => {
 };
 
 const getTodoByStatusService = async (status, userId) => {
-  if (!status) throw new ApiError(400, "Please provide a status");
+  if (!["not-started", "in-progress", "done"].includes(status)) {
+    throw new ApiError(400, "Invalid todo status");
+  }
   return await dbTodo.find({ status, userId });
 };
 
@@ -61,7 +63,7 @@ const clearTodosService = async (userId) => {
   return await dbTodo.deleteMany({ userId });
 };
 
-const updateTodoService = async (id, userId, data) => {
+const updateTodoService = async (id, userId, data = {}) => {
   if (!mongoose.isValidObjectId(id)) throw new ApiError(400, "Invalid todo ID");
 
   const updateData = {};
