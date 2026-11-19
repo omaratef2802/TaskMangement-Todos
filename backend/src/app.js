@@ -6,6 +6,12 @@ const ApiError = require("./utils/ApiError");
 const app = express();
 
 app.use(express.json());
+app.use((req, res, next) => {
+  if (!req.body || typeof req.body !== "object" || Array.isArray(req.body)) {
+    req.body = {};
+  }
+  next();
+});
 app.use(passport.initialize());
 
 const users = require("./routers/users");
