@@ -1,3 +1,4 @@
+const crypto = require("crypto");
 const dbUser = require("../modules/dbUser");
 const bcrypt = require("bcrypt");
 const genToken = require("../utils/gnToken");
@@ -15,9 +16,10 @@ const Login = async (mail, password) => {
   const user = await dbUser.findOne({ mail });
 
   if (!user || !user.password)
-    throw new ApiError(404, "password or mail is not correct");
+    throw new ApiError(401, "Email or password is incorrect");
+
   const verify = await bcrypt.compare(password, user.password);
-  if (!verify) throw new ApiError(404, "password or mail is not correct");
+  if (!verify) throw new ApiError(401, "Email or password is incorrect");
 
   return genToken(process.env.SECRET, "1w", {
     userId: user._id,
@@ -33,9 +35,7 @@ const googleLoginServices = async (user) => {
     role: user.role,
   });
 
-  return {
-    token,
-  };
+  return { token };
 };
 
 const getUserByID = async (id) => {
@@ -48,24 +48,39 @@ const getAllUsers = async (page = 1, limit = 10) => {
 };
 
 const updataInfoToUser = async (id, data) => {
-  const user = await dbUser.findByIdAndUpdate(id, data, {
+  const allowedFields = ["fname", "lname", "username"];
+  const updateData = {};
+
+  for (const field of allowedFields) {
+    if (data[field] !== undefined) updateData[field] = data[field];
+  }
+
+  if (!Object.keys(updateData).length) {
+    throw new ApiError(400, "No valid profile fields provided");
+  }
+
+  const user = await dbUser.findByIdAndUpdate(id, updateData, {
     new: true,
     runValidators: true,
   });
-  if (!user) throw new ApiError(404, "the user is not found");
+  if (!user) throw new ApiError(404, "The user was not found");
   return user;
 };
 
 const updatePassw = async (confirmPassword, newPassword, password, id) => {
   const user = await getUserByID(id);
-  if (!user) throw new ApiError(404, "the user is not found");
+  if (!user) throw new ApiError(404, "The user was not found");
+  if (!user.password) {
+    throw new ApiError(400, "This account does not have a local password yet");
+  }
+
   const verify = await bcrypt.compare(password, user.password);
-  if (!verify) throw new ApiError(404, "the password isn't correct");
-  if (confirmPassword != newPassword)
-    throw new ApiError(
-      404,
-      "the confirm password doen't match the new password",
-    );
+  if (!verify) throw new ApiError(401, "The current password is incorrect");
+
+  if (confirmPassword !== newPassword) {
+    throw new ApiError(400, "The confirmation password does not match");
+  }
+
   user.password = newPassword;
   await user.save();
   return user;
@@ -77,23 +92,30 @@ const deleteuserFun = async (id) => {
 
 const forgetPassword = async (mail) => {
   const user = await dbUser.findOne({ mail });
-  if (!user) throw new ApiError(404, "the user not found");
-  if (user.authProvider === "google")
-    throw new ApiError(404, "this user use account of google");
+  if (!user) throw new ApiError(404, "The user was not found");
 
   await dbOtp.deleteMany({ userId: user._id });
-  const otpGen = Math.floor(100000 + Math.random() * 900000).toString();
-  const OTP = {
-    otp: otpGen,
+
+  const otpGen = crypto.randomInt(100000, 1000000).toString();
+  const otpHash = await bcrypt.hash(otpGen, 10);
+
+  await dbOtp.create({
+    otp: otpHash,
     userId: user._id,
-    expireAt: new Date(Date.now() + 60 * 1000 * 15),
-  };
-  await dbOtp.create(OTP);
-  await sendEmail(
-    mail,
-    "Password Reset OTP",
-    `<h2>Password reset</h2><p>Hello ${user.fname}</p><h1>${otpGen}</h1><p>This OTP expires in 15 minutes.</p>`,
-  );
+    expireAt: new Date(Date.now() + 15 * 60 * 1000),
+  });
+
+  try {
+    await sendEmail(
+      mail,
+      "Password Reset OTP",
+      `<h2>Password reset</h2><p>Hello ${user.fname}</p><h1>${otpGen}</h1><p>This OTP expires in 15 minutes.</p>`,
+    );
+  } catch (error) {
+    await dbOtp.deleteMany({ userId: user._id });
+    throw error;
+  }
+
   return genToken(process.env.RESET_PASSWORD_SECRET, "15m", {
     userId: user._id,
     resetPassword: true,
@@ -103,13 +125,27 @@ const forgetPassword = async (mail) => {
 const verifyOTP = async (userId, otp) => {
   const otpDb = await dbOtp.findOne({ userId });
   if (!otpDb) {
-    throw new ApiError(404, "OTP not found or expired");
+    throw new ApiError(400, "OTP not found or expired");
   }
-  if (otpDb.expireAt < new Date()) {
+
+  if (otpDb.expireAt <= new Date()) {
     await dbOtp.deleteOne({ _id: otpDb._id });
     throw new ApiError(400, "OTP expired");
   }
-  if (otpDb.otp !== String(otp)) {
+
+  if (otpDb.attempts >= 5) {
+    await dbOtp.deleteOne({ _id: otpDb._id });
+    throw new ApiError(429, "Too many incorrect OTP attempts. Request a new OTP");
+  }
+
+  const isValid = await bcrypt.compare(String(otp), otpDb.otp);
+  if (!isValid) {
+    otpDb.attempts += 1;
+    if (otpDb.attempts >= 5) {
+      await dbOtp.deleteOne({ _id: otpDb._id });
+      throw new ApiError(429, "Too many incorrect OTP attempts. Request a new OTP");
+    }
+    await otpDb.save();
     throw new ApiError(400, "The OTP is incorrect");
   }
 
@@ -123,9 +159,8 @@ const verifyOTP = async (userId, otp) => {
 
 const resetPassword = async (userId, newPassword) => {
   const user = await dbUser.findById(userId);
-  if (!user) {
-    throw new ApiError(404, "User not found");
-  }
+  if (!user) throw new ApiError(404, "User not found");
+
   user.password = newPassword;
   await user.save();
   return { message: "Password reset successfully" };
