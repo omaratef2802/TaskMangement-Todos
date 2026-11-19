@@ -9,16 +9,20 @@ const authResetPassword = (stage) => {
       if (!authorization) {
         return next(new ApiError(401, "You must provide a token"));
       }
+
       const decoded = jwt.verify(
         authorization,
         process.env.RESET_PASSWORD_SECRET,
       );
-      if (decoded.resetPassword !== true) {
+
+      if (decoded.resetPassword !== true || !decoded.userId) {
         return next(new ApiError(401, "Invalid reset password token"));
       }
+
       if (stage === "verify" && decoded.otpVerified === true) {
         return next(new ApiError(401, "OTP already verified"));
       }
+
       if (stage === "reset" && decoded.otpVerified !== true) {
         return next(new ApiError(401, "You must verify OTP first"));
       }
