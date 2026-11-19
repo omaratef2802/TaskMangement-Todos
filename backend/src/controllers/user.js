@@ -17,7 +17,7 @@ const {
 const register = async (req, res, next) => {
   try {
     const { fname, lname, username, mail, password } = req.body;
-    if (!fname || !lname || !username || !mail || !password) {
+    if (![fname, lname, username, mail, password].every((value) => typeof value === "string" && value.trim())) {
       throw new ApiError(400, "Please provide all required registration fields");
     }
 
@@ -35,7 +35,7 @@ const register = async (req, res, next) => {
 const login = async (req, res, next) => {
   try {
     const { mail, password } = req.body;
-    if (!mail || !password) {
+    if (typeof mail !== "string" || !mail.trim() || typeof password !== "string" || !password) {
       throw new ApiError(400, "Please provide email and password");
     }
 
@@ -109,9 +109,10 @@ const deleteUser = async (req, res, next) => {
 
 const updatePassword = async (req, res, next) => {
   try {
-    const { confirmPassword, newPassword, Password } = req.body;
+    const { confirmPassword, newPassword } = req.body;
+    const currentPassword = req.body.Password || req.body.password;
 
-    if (!confirmPassword || !newPassword) {
+    if (typeof confirmPassword !== "string" || typeof newPassword !== "string" || !confirmPassword || !newPassword) {
       throw new ApiError(400, "Please provide the new password and confirmation");
     }
 
@@ -120,7 +121,7 @@ const updatePassword = async (req, res, next) => {
     const user = await updatePassw(
       confirmPassword,
       newPassword,
-      Password,
+      currentPassword,
       req.id,
     );
 
@@ -133,7 +134,7 @@ const updatePassword = async (req, res, next) => {
 const ForgetPassword = async (req, res, next) => {
   try {
     const { mail } = req.body;
-    if (!mail) throw new ApiError(400, "Please provide your email");
+    if (typeof mail !== "string" || !mail.trim()) throw new ApiError(400, "Please provide a valid email");
 
     res.status(200).json({
       message: "OTP sent successfully",
@@ -147,7 +148,9 @@ const ForgetPassword = async (req, res, next) => {
 const VerifyOTP = async (req, res, next) => {
   try {
     const { otp } = req.body;
-    if (!otp || !/^[0-9]{6}$/.test(String(otp))) throw new ApiError(400, "OTP must contain exactly 6 digits");
+    if (typeof otp !== "string" || !/^[0-9]{6}$/.test(otp)) {
+      throw new ApiError(400, "OTP must contain exactly 6 digits");
+    }
 
     res.status(200).json({
       message: "OTP verified successfully",
@@ -161,7 +164,9 @@ const VerifyOTP = async (req, res, next) => {
 const ResetPassword = async (req, res, next) => {
   try {
     const { newPassword } = req.body;
-    if (!newPassword) throw new ApiError(400, "Please provide the new password");
+    if (typeof newPassword !== "string" || !newPassword) {
+      throw new ApiError(400, "Please provide the new password");
+    }
     if (newPassword.length < 8) {
       throw new ApiError(400, "Password must be at least 8 characters");
     }
