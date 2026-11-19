@@ -22,7 +22,6 @@ passport.use(
         user = await dbUser.findOne({ mail: email });
         if (user) {
           user.googleId = profile.id;
-          user.authProvider = "google";
           await user.save();
           return done(null, user);
         }
