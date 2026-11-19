@@ -18,10 +18,9 @@ const createTodos = async (todo, userId) => {
 
 const getTodoByTitleService = async (title, userId) => {
   if (!title) throw new ApiError(400, "Please provide a title");
-  const safeTitle = title.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&");
-  return await dbTodo.find({
-    userId,
-    title: { $regex: safeTitle, $options: "i" },
+  return await dbTodo.find({ userId, title }).collation({
+    locale: "en",
+    strength: 2,
   });
 };
 
