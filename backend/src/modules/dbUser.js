@@ -32,7 +32,7 @@ const userSchmea = mongoose.Schema(
       trim: true,
       validate: {
         validator: (email) =>
-          /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email),
+          /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$/.test(email),
         message: (obj) => `${obj.value} is not valid`,
       },
       unique: [true, "the email must be unique"],
@@ -61,7 +61,17 @@ const userSchmea = mongoose.Schema(
       default: "user",
     },
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+    toJSON: {
+      transform: (doc, ret) => {
+        delete ret.password;
+        delete ret.googleId;
+        delete ret.__v;
+        return ret;
+      },
+    },
+  },
 );
 
 userSchmea.pre("save", async function () {
