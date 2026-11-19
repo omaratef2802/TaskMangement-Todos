@@ -147,7 +147,7 @@ const ForgetPassword = async (req, res, next) => {
 const VerifyOTP = async (req, res, next) => {
   try {
     const { otp } = req.body;
-    if (!otp || !/^\\d{6}$/.test(String(otp))) throw new ApiError(400, "OTP must contain exactly 6 digits");
+    if (!otp || !/^[0-9]{6}$/.test(String(otp))) throw new ApiError(400, "OTP must contain exactly 6 digits");
 
     res.status(200).json({
       message: "OTP verified successfully",
