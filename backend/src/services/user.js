@@ -68,7 +68,7 @@ const updataInfoToUser = async (id, data) => {
 };
 
 const updatePassw = async (confirmPassword, newPassword, password, id) => {
-  const user = await getUserByID(id);
+  const user = await dbUser.findById(id).select("+resetTokenHash");
   if (!user) throw new ApiError(404, "The user was not found");
 
   if (confirmPassword !== newPassword) {
@@ -82,6 +82,7 @@ const updatePassw = async (confirmPassword, newPassword, password, id) => {
   }
 
   user.password = newPassword;
+  user.resetTokenHash = undefined;
   await user.save();
   return user;
 };
@@ -150,18 +151,26 @@ const verifyOTP = async (userId, otp) => {
   }
 
   await dbOtp.deleteOne({ _id: otpDb._id });
-  return genToken(process.env.RESET_PASSWORD_SECRET, "15m", {
+
+  const resetToken = genToken(process.env.RESET_PASSWORD_SECRET, "15m", {
     userId,
     resetPassword: true,
     otpVerified: true,
   });
+  const user = await dbUser.findById(userId).select("+resetTokenHash");
+  if (!user) throw new ApiError(404, "User not found");
+
+  user.resetTokenHash = await bcrypt.hash(resetToken, 10);
+  await user.save();
+  return resetToken;
 };
 
 const resetPassword = async (userId, newPassword) => {
-  const user = await dbUser.findById(userId);
+  const user = await dbUser.findById(userId).select("+resetTokenHash");
   if (!user) throw new ApiError(404, "User not found");
 
   user.password = newPassword;
+  user.resetTokenHash = undefined;
   await user.save();
   return { message: "Password reset successfully" };
 };
