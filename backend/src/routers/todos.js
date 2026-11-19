@@ -20,10 +20,9 @@ router.get("/AllTodos", auth, getTodos);
 router.get("/AllTodoByTitle", auth, getTodoByTitle);
 router.get("/AllTodoByStatus", auth, getTodoByStatus);
 router.get("/todo/:id", auth, getTodoById);
-router.get("/AllTodoByTitle", getTodoByTitle);
-router.post("/addTodo", auth, relasedTo("Admin"), createTodo);
+router.post("/addTodo", auth, createTodo);
+router.patch("/updateTodo/:id", auth, updateTodo);
 router.delete("/deleteTodo/:id", auth, deleteTodo);
-router.delete("/clearTodo", auth, relasedTo("Admin"), clearTodo);
-router.patch("/updateTodo", auth, relasedTo("Admin"), updateTodo);
+router.delete("/clearTodo", auth, clearTodo);
 
 module.exports = router;
