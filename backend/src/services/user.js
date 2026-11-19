@@ -13,7 +13,7 @@ const createUser = async (info) => {
 };
 
 const Login = async (mail, password) => {
-  const user = await dbUser.findOne({ mail });
+  const user = await dbUser.findOne({ mail: mail.trim().toLowerCase() });
 
   if (!user || !user.password)
     throw new ApiError(401, "Email or password is incorrect");
@@ -70,15 +70,15 @@ const updataInfoToUser = async (id, data) => {
 const updatePassw = async (confirmPassword, newPassword, password, id) => {
   const user = await getUserByID(id);
   if (!user) throw new ApiError(404, "The user was not found");
-  if (!user.password) {
-    throw new ApiError(400, "This account does not have a local password yet");
-  }
-
-  const verify = await bcrypt.compare(password, user.password);
-  if (!verify) throw new ApiError(401, "The current password is incorrect");
 
   if (confirmPassword !== newPassword) {
     throw new ApiError(400, "The confirmation password does not match");
+  }
+
+  if (user.password) {
+    if (!password) throw new ApiError(400, "Please provide your current password");
+    const verify = await bcrypt.compare(password, user.password);
+    if (!verify) throw new ApiError(401, "The current password is incorrect");
   }
 
   user.password = newPassword;
