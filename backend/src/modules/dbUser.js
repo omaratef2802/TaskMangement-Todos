@@ -56,6 +56,10 @@ const userSchmea = mongoose.Schema(
     googleId: {
       type: String,
     },
+    resetTokenHash: {
+      type: String,
+      select: false,
+    },
     role: {
       type: String,
       enum: ["user", "Admin"],
