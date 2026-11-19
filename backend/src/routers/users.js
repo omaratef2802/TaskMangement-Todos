@@ -41,7 +41,7 @@ router.post("/signin", register);
 router.post("/login", login);
 router.patch("/updateProfile", auth, updateUser);
 router.patch("/updatePassword", auth, updatePassword);
-router.delete("/deleteUsers", auth, relasedTo("Admin"), deleteUser);
+router.delete("/deleteUsers/:id", auth, relasedTo("Admin"), deleteUser);
 router.patch("/uploadImage", auth, upload.single("image"), uploadImageUser);
 router.post("/forgetPassword", ForgetPassword);
 router.post("/verifyOTP", authResetPassword("verify"), VerifyOTP);
