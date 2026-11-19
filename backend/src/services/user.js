@@ -96,6 +96,7 @@ const forgetPassword = async (mail) => {
   if (!user) throw new ApiError(404, "The user was not found");
 
   await dbOtp.deleteMany({ userId: user._id });
+  await dbUser.updateOne({ _id: user._id }, { $unset: { resetTokenHash: 1 } });
 
   const otpGen = crypto.randomInt(100000, 1000000).toString();
   const otpHash = await bcrypt.hash(otpGen, 10);
@@ -108,7 +109,7 @@ const forgetPassword = async (mail) => {
 
   try {
     await sendEmail(
-      mail,
+      user.mail,
       "Password Reset OTP",
       `<h2>Password reset</h2><p>Hello ${user.fname}</p><h1>${otpGen}</h1><p>This OTP expires in 15 minutes.</p>`,
     );
