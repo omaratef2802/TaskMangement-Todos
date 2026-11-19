@@ -91,7 +91,7 @@ const deleteuserFun = async (id) => {
 };
 
 const forgetPassword = async (mail) => {
-  const user = await dbUser.findOne({ mail });
+  const user = await dbUser.findOne({ mail: mail.trim().toLowerCase() });
   if (!user) throw new ApiError(404, "The user was not found");
 
   await dbOtp.deleteMany({ userId: user._id });
