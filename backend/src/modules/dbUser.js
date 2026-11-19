@@ -72,6 +72,7 @@ const userSchmea = mongoose.Schema(
       transform: (doc, ret) => {
         delete ret.password;
         delete ret.googleId;
+        delete ret.resetTokenHash;
         delete ret.__v;
         return ret;
       },
