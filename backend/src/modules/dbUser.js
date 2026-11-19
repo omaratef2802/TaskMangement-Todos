@@ -32,7 +32,7 @@ const userSchmea = mongoose.Schema(
       trim: true,
       validate: {
         validator: (email) =>
-          /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$/.test(email),
+          /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email),
         message: (obj) => `${obj.value} is not valid`,
       },
       unique: [true, "the email must be unique"],
@@ -46,6 +46,7 @@ const userSchmea = mongoose.Schema(
       required: function () {
         return this.authProvider === "local";
       },
+      minLength: [8, "Password must be at least 8 characters"],
     },
     authProvider: {
       type: String,
