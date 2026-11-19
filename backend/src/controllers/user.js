@@ -21,6 +21,8 @@ const register = async (req, res, next) => {
       throw new ApiError(400, "Please provide all required registration fields");
     }
 
+    if (password.length < 8) throw new ApiError(400, "Password must be at least 8 characters");
+
     res.status(201).json({
       message: "success",
       data: await createUser({ fname, lname, username, mail, password }),
@@ -112,6 +114,8 @@ const updatePassword = async (req, res, next) => {
     if (!confirmPassword || !newPassword) {
       throw new ApiError(400, "Please provide the new password and confirmation");
     }
+
+    if (newPassword.length < 8) throw new ApiError(400, "Password must be at least 8 characters");
 
     const user = await updatePassw(
       confirmPassword,
