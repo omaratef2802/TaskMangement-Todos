@@ -21,7 +21,9 @@ const createTodos = async (todo = {}, userId) => {
 };
 
 const getTodoByTitleService = async (title, userId) => {
-  if (!title) throw new ApiError(400, "Please provide a title");
+  if (typeof title !== "string" || !title.trim()) {
+    throw new ApiError(400, "Please provide a valid title");
+  }
   return await dbTodo.find({ userId, title }).collation({
     locale: "en",
     strength: 2,
@@ -29,7 +31,7 @@ const getTodoByTitleService = async (title, userId) => {
 };
 
 const getTodoByStatusService = async (status, userId) => {
-  if (!["not-started", "in-progress", "done"].includes(status)) {
+  if (typeof status !== "string" || !["not-started", "in-progress", "done"].includes(status)) {
     throw new ApiError(400, "Invalid todo status");
   }
   return await dbTodo.find({ status, userId });
