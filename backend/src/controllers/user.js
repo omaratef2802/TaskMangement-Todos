@@ -1,4 +1,3 @@
-const bcrypt = require("bcrypt");
 const ApiError = require("../utils/ApiError");
 const {
   createUser,
@@ -18,29 +17,32 @@ const {
 const register = async (req, res, next) => {
   try {
     const { fname, lname, username, mail, password } = req.body;
+    if (!fname || !lname || !username || !mail || !password) {
+      throw new ApiError(400, "Please provide all required registration fields");
+    }
+
     res.status(201).json({
       message: "success",
       data: await createUser({ fname, lname, username, mail, password }),
     });
   } catch (err) {
-    return next(new ApiError(500, err.message));
+    next(err);
   }
 };
 
 const login = async (req, res, next) => {
   try {
     const { mail, password } = req.body;
-    if (!mail || !password)
-      return res.status(404).json({
-        message: "Error",
-        data: "must provide me the mail and passwrod",
-      });
+    if (!mail || !password) {
+      throw new ApiError(400, "Please provide email and password");
+    }
 
-    res
-      .status(200)
-      .json({ message: "success", data: await Login(mail, password) });
+    res.status(200).json({
+      message: "success",
+      data: await Login(mail, password),
+    });
   } catch (err) {
-    return next(new ApiError(500, err.message));
+    next(err);
   }
 };
 
@@ -58,47 +60,48 @@ const googleAuthCallback = async (req, res, next) => {
 
 const updateUser = async (req, res, next) => {
   try {
-    const newUser = await updataInfoToUser(req.id, req.body);
-    if (!newUser) return new ApiError(404, "failed operation");
-
-    res.status(200).json({ message: "success", data: newUser });
+    const user = await updataInfoToUser(req.id, req.body);
+    res.status(200).json({ message: "success", data: user });
   } catch (err) {
-    return next(new ApiError(500, err.message));
+    next(err);
   }
 };
 
 const getUserById = async (req, res, next) => {
   try {
     const user = await getUserByID(req.id);
-    if (!user)
-      res.status(404).json({ message: "erro", data: "user not found" });
+    if (!user) throw new ApiError(404, "User not found");
 
     res.status(200).json({ message: "success", data: user });
   } catch (err) {
-    return next(new ApiError(500, err.message));
+    next(err);
   }
 };
 
 const getUsers = async (req, res, next) => {
   try {
-    const { page, limit } = req.params;
+    const page = Number(req.query.page || 1);
+    const limit = Number(req.query.limit || 10);
+
+    if (!Number.isInteger(page) || page < 1 || !Number.isInteger(limit) || limit < 1 || limit > 100) {
+      throw new ApiError(400, "Page must be positive and limit must be between 1 and 100");
+    }
+
     const users = await getAllUsers(page, limit);
-    res.status(200).json({ message: "success ", data: users });
+    res.status(200).json({ message: "success", data: users });
   } catch (err) {
-    return next(new ApiError(500, err.message));
+    next(err);
   }
 };
+
 const deleteUser = async (req, res, next) => {
   try {
-    const user = await deleteuserFun(req.id);
-    if (!user)
-      return res.status(404).json({ message: "Error", data: "user not found" });
+    const user = await deleteuserFun(req.params.id || req.id);
+    if (!user) throw new ApiError(404, "User not found");
 
-    res
-      .status(203)
-      .json({ message: "success", data: "user deleted succeefuly" });
+    res.status(200).json({ message: "User deleted successfully" });
   } catch (err) {
-    return next(new ApiError(500, err.message));
+    next(err);
   }
 };
 
@@ -106,11 +109,9 @@ const updatePassword = async (req, res, next) => {
   try {
     const { confirmPassword, newPassword, Password } = req.body;
 
-    if (!confirmPassword || !newPassword || !Password)
-      return res.status(404).json({
-        message:
-          "please provide me the password and new password and confirm password",
-      });
+    if (!confirmPassword || !newPassword) {
+      throw new ApiError(400, "Please provide the new password and confirmation");
+    }
 
     const user = await updatePassw(
       confirmPassword,
@@ -121,47 +122,44 @@ const updatePassword = async (req, res, next) => {
 
     res.status(200).json({ message: "success", data: user });
   } catch (err) {
-    return next(new ApiError(500, err.message));
+    next(err);
   }
 };
 
 const ForgetPassword = async (req, res, next) => {
   try {
     const { mail } = req.body;
-    if (!mail) {
-      throw new ApiError(400, "Please provide your email");
-    }
+    if (!mail) throw new ApiError(400, "Please provide your email");
 
     res.status(200).json({
       message: "OTP sent successfully",
       data: await forgetPassword(mail),
     });
   } catch (err) {
-    return next(new ApiError(500, err.message));
+    next(err);
   }
 };
 
 const VerifyOTP = async (req, res, next) => {
   try {
     const { otp } = req.body;
-    if (!otp) {
-      throw new ApiError(400, "Please provide the OTP");
-    }
+    if (!otp) throw new ApiError(400, "Please provide the OTP");
 
     res.status(200).json({
       message: "OTP verified successfully",
       data: await verifyOTP(req.id, otp),
     });
   } catch (err) {
-    return next(new ApiError(500, err.message));
+    next(err);
   }
 };
 
 const ResetPassword = async (req, res, next) => {
   try {
     const { newPassword } = req.body;
-    if (!newPassword) {
-      throw new ApiError(400, "Please provide the new password");
+    if (!newPassword) throw new ApiError(400, "Please provide the new password");
+    if (newPassword.length < 8) {
+      throw new ApiError(400, "Password must be at least 8 characters");
     }
 
     res.status(200).json({
@@ -169,15 +167,14 @@ const ResetPassword = async (req, res, next) => {
       data: await resetPassword(req.id, newPassword),
     });
   } catch (err) {
-    return next(new ApiError(500, err.message));
+    next(err);
   }
 };
 
 const uploadImageUser = async (req, res, next) => {
   try {
-    if (!req.file) {
-      throw new ApiError(400, "Please upload an image");
-    }
+    if (!req.file) throw new ApiError(400, "Please upload an image");
+
     const user = await uploadUserImage(req.id, req.file);
     res.status(200).json({
       message: "Image uploaded successfully",
