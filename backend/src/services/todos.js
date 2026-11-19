@@ -1,37 +1,82 @@
+const mongoose = require("mongoose");
 const dbTodo = require("../modules/dbTodos");
 const ApiError = require("../utils/ApiError");
 
-const createTodos = async (todo) => {
-  return await dbTodo.create(todo);
+const editableFields = [
+  "type",
+  "title",
+  "status",
+  "description",
+  "deadline",
+  "category",
+  "priority",
+];
+
+const createTodos = async (todo, userId) => {
+  return await dbTodo.create({ ...todo, userId });
 };
+
 const getTodoByTitleService = async (title, userId) => {
-  const todo = await dbTodo.find({ title, userId });
-  if (!todo) throw new ApiError(404, "the todo isn't exit");
-  return todo;
+  if (!title) throw new ApiError(400, "Please provide a title");
+  return await dbTodo.find({
+    userId,
+    title: { $regex: title, $options: "i" },
+  });
 };
+
 const getTodoByStatusService = async (status, userId) => {
-  const todo = await dbTodo.find({ status, userId });
-  if (!todo) throw new ApiError(404, "the todo isn't exist");
+  if (!status) throw new ApiError(400, "Please provide a status");
+  return await dbTodo.find({ status, userId });
+};
+
+const getTodoByIdService = async (id, userId) => {
+  if (!mongoose.isValidObjectId(id)) throw new ApiError(400, "Invalid todo ID");
+
+  const todo = await dbTodo.findOne({ _id: id, userId });
+  if (!todo) throw new ApiError(404, "Todo not found");
   return todo;
 };
 
-const getTodoByIdService = async (id) => {
-  const todo = await dbTodo.findById(id);
-  if (!todo) throw new ApiError(404, "the todo isn't exist");
-  return todo;
-};
 const getTodosSercviec = async (userId) => {
   return await dbTodo.find({ userId }).populate("userId", "username");
 };
+
 const getAllTodosService = async () => {
   return await dbTodo.find().populate("userId", "mail username");
 };
-const deleteTodoService = async (id) => {
-  return await dbTodo.findByIdAndDelete(id);
+
+const deleteTodoService = async (id, userId) => {
+  if (!mongoose.isValidObjectId(id)) throw new ApiError(400, "Invalid todo ID");
+
+  const todo = await dbTodo.findOneAndDelete({ _id: id, userId });
+  if (!todo) throw new ApiError(404, "Todo not found");
+  return todo;
 };
 
 const clearTodosService = async (userId) => {
   return await dbTodo.deleteMany({ userId });
+};
+
+const updateTodoService = async (id, userId, data) => {
+  if (!mongoose.isValidObjectId(id)) throw new ApiError(400, "Invalid todo ID");
+
+  const updateData = {};
+  for (const field of editableFields) {
+    if (data[field] !== undefined) updateData[field] = data[field];
+  }
+
+  if (!Object.keys(updateData).length) {
+    throw new ApiError(400, "No valid todo fields provided");
+  }
+
+  const todo = await dbTodo.findOneAndUpdate(
+    { _id: id, userId },
+    { $set: updateData },
+    { new: true, runValidators: true },
+  );
+
+  if (!todo) throw new ApiError(404, "Todo not found");
+  return todo;
 };
 
 module.exports = {
@@ -43,4 +88,5 @@ module.exports = {
   getAllTodosService,
   deleteTodoService,
   clearTodosService,
+  updateTodoService,
 };
