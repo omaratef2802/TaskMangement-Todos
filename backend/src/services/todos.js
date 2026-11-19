@@ -13,7 +13,11 @@ const editableFields = [
 ];
 
 const createTodos = async (todo, userId) => {
-  return await dbTodo.create({ ...todo, userId });
+  const todoData = {};
+  for (const field of editableFields) {
+    if (todo[field] !== undefined) todoData[field] = todo[field];
+  }
+  return await dbTodo.create({ ...todoData, userId });
 };
 
 const getTodoByTitleService = async (title, userId) => {
