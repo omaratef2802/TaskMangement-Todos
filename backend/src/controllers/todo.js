@@ -1,4 +1,3 @@
-const ApiError = require("../utils/ApiError");
 const {
   createTodos,
   getTodoByTitleService,
@@ -8,88 +7,100 @@ const {
   getAllTodosService,
   deleteTodoService,
   clearTodosService,
+  updateTodoService,
 } = require("../services/todos");
 
 const createTodo = async (req, res, next) => {
   try {
-    const todo = req.body;
-    todo.userId = req.id;
-    res.status(201).json({ message: "success", data: await createTodos(todo) });
+    const todo = await createTodos(req.body, req.id);
+    res.status(201).json({ message: "success", data: todo });
   } catch (err) {
-    next(new ApiError(404, err.message));
+    next(err);
   }
 };
+
 const getTodoByTitle = async (req, res, next) => {
   try {
-    const { title } = req.body;
     res.status(200).json({
       message: "success",
-      data: await getTodoByTitleService(title, req.id),
+      data: await getTodoByTitleService(req.query.title, req.id),
     });
   } catch (err) {
-    next(new ApiError(404, err.message));
+    next(err);
   }
 };
+
 const getTodoByStatus = async (req, res, next) => {
   try {
-    const { status } = req.body;
     res.status(200).json({
       message: "success",
-      data: await getTodoByStatusService(status, req.id),
+      data: await getTodoByStatusService(req.query.status, req.id),
     });
   } catch (err) {
-    next(new ApiError(404, err.message));
+    next(err);
   }
 };
+
 const getTodoById = async (req, res, next) => {
   try {
-    const { id } = req.params;
-    res
-      .status(200)
-      .json({ message: "success", data: await getTodoByIdService(id) });
+    res.status(200).json({
+      message: "success",
+      data: await getTodoByIdService(req.params.id, req.id),
+    });
   } catch (err) {
-    next(new ApiError(404, err.message));
+    next(err);
   }
 };
+
 const getTodos = async (req, res, next) => {
   try {
-    res
-      .status(200)
-      .json({ message: "success", data: await getTodosSercviec(req.id) });
+    res.status(200).json({
+      message: "success",
+      data: await getTodosSercviec(req.id),
+    });
   } catch (err) {
-    next(new ApiError(404, err.message));
+    next(err);
   }
 };
+
 const getAllTodos = async (req, res, next) => {
   try {
-    res
-      .status(200)
-      .json({ messag: "success", data: await getAllTodosService() });
+    res.status(200).json({
+      message: "success",
+      data: await getAllTodosService(),
+    });
   } catch (err) {
-    next(new ApiError(404, err.message));
+    next(err);
   }
 };
+
 const deleteTodo = async (req, res, next) => {
   try {
-    const { id } = req.params;
-    await deleteTodoService(id);
-    res.status(203).json({ message: "success", data: "delted" });
+    await deleteTodoService(req.params.id, req.id);
+    res.status(200).json({ message: "Todo deleted successfully" });
   } catch (err) {
-    next(new ApiError(404, err.message));
+    next(err);
   }
 };
+
 const clearTodo = async (req, res, next) => {
   try {
-    await clearTodosService(req.id);
-    res.status(203).json({ message: "success", data: "deleted successfully" });
+    const result = await clearTodosService(req.id);
+    res.status(200).json({
+      message: "Todos deleted successfully",
+      deletedCount: result.deletedCount,
+    });
   } catch (err) {
-    next(new ApiError(404, err.message));
+    next(err);
   }
 };
+
 const updateTodo = async (req, res, next) => {
   try {
+    const todo = await updateTodoService(req.params.id, req.id, req.body);
+    res.status(200).json({ message: "Todo updated successfully", data: todo });
   } catch (err) {
-    next(new ApiError(404, err.message));
+    next(err);
   }
 };
 
