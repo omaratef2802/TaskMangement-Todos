@@ -13,6 +13,7 @@ const {
   unassignTodo,
   getAssignedToMe,
   getAssignedByMe,
+  getAssignableUsers,
   updateAssignedTodoStatus,
   deleteTodo,
   clearTodo,
@@ -25,6 +26,7 @@ router.get("/AllTodosUsers", auth, relasedTo("Admin"), getAllTodos);
 router.get("/stats", auth, getTodoStats);
 router.get("/assignedToMe", auth, getAssignedToMe);
 router.get("/assignedByMe", auth, getAssignedByMe);
+router.get("/assignableUsers", auth, getAssignableUsers);
 router.patch("/assign/:id", auth, assignTodo);
 router.patch("/unassign/:id", auth, unassignTodo);
 router.patch("/assigned/:id/status", auth, updateAssignedTodoStatus);
