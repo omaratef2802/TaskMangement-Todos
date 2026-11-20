@@ -6,7 +6,7 @@ const { startTodoReminderScheduler } = require("./src/services/todoReminders");
 (async function start() {
   try {
     await connectDB();
-    startTodoReminderScheduler();
+    await startTodoReminderScheduler();
     const port = process.env.PORT || 3000;
     app.listen(port, () => console.log(`the server run on the port ${port}`));
   } catch (error) {

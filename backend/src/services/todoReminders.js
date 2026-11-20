@@ -4,6 +4,23 @@ const dbReminder = require("../modules/dbTodoReminder");
 const mailTransport = require("../config/nodemailer");
 let started = false;
 
+const migrateAssigneeStatuses = async () => {
+  const todos = await dbTodo.find({ assignedTo: { $exists: true, $ne: [] } })
+    .select("_id assignedTo assignedStatuses");
+  for (const todo of todos) {
+    const existing = new Set(todo.assignedStatuses.map((entry) => String(entry.userId)));
+    const missing = todo.assignedTo
+      .filter((userId) => !existing.has(String(userId)))
+      .map((userId) => ({ userId, status: "not-started", completedAt: null }));
+    if (missing.length) {
+      await dbTodo.updateOne(
+        { _id: todo._id },
+        { $addToSet: { assignedStatuses: { $each: missing } } },
+      );
+    }
+  }
+};
+
 const sendDueTodoReminders = async () => {
   const now = new Date();
   const upper = new Date(now.getTime() + 24 * 60 * 60 * 1000);
@@ -57,9 +74,10 @@ const sendDueTodoReminders = async () => {
   }
 };
 
-const startTodoReminderScheduler = () => {
+const startTodoReminderScheduler = async () => {
   if (started) return;
   started = true;
+  await migrateAssigneeStatuses();
   const run = () => sendDueTodoReminders().catch((error) => {
     console.error("Todo reminder scheduler failed:", error.message);
   });
@@ -67,4 +85,4 @@ const startTodoReminderScheduler = () => {
   setInterval(run, 15 * 60 * 1000);
 };
 
-module.exports = { startTodoReminderScheduler, sendDueTodoReminders };
+module.exports = { startTodoReminderScheduler, sendDueTodoReminders, migrateAssigneeStatuses };

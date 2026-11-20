@@ -551,7 +551,7 @@ const clearTodosService = async (userId) => {
 
 const getDeletedTodosService = async (userId, query = {}) => {
   const options = getListOptions(query);
-  const filter = { userId, deletedAt: { $ne: null } };
+  const filter = { ...options.filter, userId, deletedAt: { $ne: null } };
   const [todos, total] = await Promise.all([
     dbTodo.find(filter).populate("assignedTo", "fname lname username image")
       .sort(options.sort).skip(options.skip).limit(options.limit),

@@ -214,7 +214,7 @@ const deleteTodoComment = async (req, res, next) => {
 const deleteTodo = async (req, res, next) => {
   try {
     await deleteTodoService(req.params.id, req.id);
-    res.status(200).json({ message: "Todo deleted successfully" });
+    res.status(200).json({ message: "Todo moved to trash successfully" });
   } catch (err) {
     next(err);
   }
@@ -224,7 +224,7 @@ const clearTodo = async (req, res, next) => {
   try {
     const result = await clearTodosService(req.id);
     res.status(200).json({
-      message: "Todos deleted successfully",
+      message: "Todos moved to trash successfully",
       deletedCount: result.deletedCount,
     });
   } catch (err) {
