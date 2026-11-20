@@ -25,6 +25,20 @@ const allowedSortFields = [
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const getListOptions = (query = {}) => {
+  const stringFields = ["sortBy", "order", "status", "priority", "type", "category", "search", "overdue"];
+  for (const field of stringFields) {
+    if (query[field] !== undefined && typeof query[field] !== "string") {
+      throw new ApiError(400, `Invalid ${field} query parameter`);
+    }
+  }
+
+  if (query.page !== undefined && typeof query.page !== "string") {
+    throw new ApiError(400, "Invalid page query parameter");
+  }
+  if (query.limit !== undefined && typeof query.limit !== "string") {
+    throw new ApiError(400, "Invalid limit query parameter");
+  }
+
   const page = Number(query.page ?? 1);
   const limit = Number(query.limit ?? 10);
 
@@ -276,6 +290,13 @@ const assignTodoService = async (id, ownerId, userIds) => {
     throw new ApiError(404, "One or more users were not found");
   }
 
+  const newIds = normalizedIds.filter(
+    (userId) => !todo.assignedTo.some((assignedId) => String(assignedId) === userId),
+  );
+  if (todo.assignedTo.length + newIds.length > 20) {
+    throw new ApiError(400, "A todo can have a maximum of 20 assignees");
+  }
+
   const updatedTodo = await dbTodo.findOneAndUpdate(
     { _id: id, userId: ownerId },
     { $addToSet: { assignedTo: { $each: normalizedIds } } },
@@ -349,6 +370,57 @@ const getAssignedByMeService = async (userId, query = {}) => {
       limit: options.limit,
       total,
       totalPages: Math.ceil(total / options.limit),
+    },
+  };
+};
+
+const getAssignableUsersService = async (currentUserId, query = {}) => {
+  const page = Number(query.page ?? 1);
+  const limit = Number(query.limit ?? 10);
+
+  if (
+    (query.page !== undefined && typeof query.page !== "string") ||
+    (query.limit !== undefined && typeof query.limit !== "string") ||
+    !Number.isInteger(page) ||
+    page < 1 ||
+    !Number.isInteger(limit) ||
+    limit < 1 ||
+    limit > 50
+  ) {
+    throw new ApiError(400, "Invalid pagination values");
+  }
+
+  const filter = { _id: { $ne: currentUserId } };
+  if (query.search !== undefined) {
+    if (typeof query.search !== "string" || !query.search.trim()) {
+      throw new ApiError(400, "Please provide a valid search value");
+    }
+
+    const search = escapeRegex(query.search.trim());
+    filter.$or = [
+      { fname: { $regex: search, $options: "i" } },
+      { lname: { $regex: search, $options: "i" } },
+      { username: { $regex: search, $options: "i" } },
+      { mail: { $regex: search, $options: "i" } },
+    ];
+  }
+
+  const [users, total] = await Promise.all([
+    dbUser.find(filter)
+      .select("fname lname username mail image")
+      .sort({ fname: 1, lname: 1 })
+      .skip((page - 1) * limit)
+      .limit(limit),
+    dbUser.countDocuments(filter),
+  ]);
+
+  return {
+    users,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
     },
   };
 };
@@ -452,6 +524,7 @@ module.exports = {
   unassignTodoService,
   getAssignedToMeService,
   getAssignedByMeService,
+  getAssignableUsersService,
   updateAssignedTodoStatusService,
   deleteTodoService,
   clearTodosService,
