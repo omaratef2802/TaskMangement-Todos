@@ -55,6 +55,9 @@ const todoSchema = mongoose.Schema(
   { timestamps: true },
 );
 
+todoSchema.index({ userId: 1, createdAt: -1 });
+todoSchema.index({ userId: 1, status: 1 });
+
 const todoModule = mongoose.model("todos", todoSchema);
 
 module.exports = todoModule;
