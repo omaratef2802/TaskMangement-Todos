@@ -266,7 +266,13 @@ const getTodoStatsService = async (userId) => {
       dbTodo.countDocuments({ userId, priority: "high" }),
       dbTodo.countDocuments({ assignedTo: userId, userId: { $ne: userId } }),
       dbTodo.countDocuments({ userId, assignedTo: { $exists: true, $ne: [] } }),
-      dbTodo.countDocuments({ userId, assignedTo: { $size: 0 } }),
+      dbTodo.countDocuments({
+        userId,
+        $or: [
+          { assignedTo: { $exists: false } },
+          { assignedTo: { $size: 0 } },
+        ],
+      }),
     ]);
 
   return {
