@@ -57,6 +57,7 @@ const todoSchema = mongoose.Schema(
 
 todoSchema.index({ userId: 1, createdAt: -1 });
 todoSchema.index({ userId: 1, status: 1 });
+todoSchema.index({ assignedTo: 1, createdAt: -1 });
 
 const todoModule = mongoose.model("todos", todoSchema);
 
