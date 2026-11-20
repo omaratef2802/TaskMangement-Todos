@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const dbTodo = require("../modules/dbTodos");
+const dbUser = require("../modules/dbUser");
 const ApiError = require("../utils/ApiError");
 
 const editableFields = [
@@ -242,6 +243,135 @@ const getTodoStatsService = async (userId) => {
     overdue,
     priorities: { low, medium, high },
   };
+};
+
+const assignTodoService = async (id, ownerId, userIds) => {
+  if (!mongoose.isValidObjectId(id)) {
+    throw new ApiError(400, "Invalid todo ID");
+  }
+
+  if (!Array.isArray(userIds) || userIds.length === 0) {
+    throw new ApiError(400, "Please provide at least one user ID");
+  }
+
+  const normalizedIds = [...new Set(userIds.map((userId) => String(userId)))];
+  if (normalizedIds.some((userId) => !mongoose.isValidObjectId(userId))) {
+    throw new ApiError(400, "One or more user IDs are invalid");
+  }
+
+  const todo = await dbTodo.findOne({ _id: id, userId: ownerId });
+  if (!todo) throw new ApiError(404, "Todo not found");
+
+  const users = await dbUser.find({ _id: { $in: normalizedIds } }).select("_id");
+  if (users.length !== normalizedIds.length) {
+    throw new ApiError(404, "One or more users were not found");
+  }
+
+  const updatedTodo = await dbTodo.findOneAndUpdate(
+    { _id: id, userId: ownerId },
+    { $addToSet: { assignedTo: { $each: normalizedIds } } },
+    { new: true, runValidators: true },
+  ).populate("assignedTo", "fname lname username mail");
+
+  return updatedTodo;
+};
+
+const unassignTodoService = async (id, ownerId, userId) => {
+  if (!mongoose.isValidObjectId(id)) {
+    throw new ApiError(400, "Invalid todo ID");
+  }
+
+  if (typeof userId !== "string" || !mongoose.isValidObjectId(userId)) {
+    throw new ApiError(400, "Invalid user ID");
+  }
+
+  const todo = await dbTodo.findOneAndUpdate(
+    { _id: id, userId: ownerId },
+    { $pull: { assignedTo: userId } },
+    { new: true, runValidators: true },
+  ).populate("assignedTo", "fname lname username mail");
+
+  if (!todo) throw new ApiError(404, "Todo not found");
+  return todo;
+};
+
+const getAssignedToMeService = async (userId, query = {}) => {
+  const options = getListOptions(query);
+  const filter = { ...options.filter, assignedTo: userId };
+
+  const [todos, total] = await Promise.all([
+    dbTodo.find(filter)
+      .populate("userId", "fname lname username mail")
+      .populate("assignedTo", "fname lname username")
+      .sort(options.sort)
+      .skip(options.skip)
+      .limit(options.limit),
+    dbTodo.countDocuments(filter),
+  ]);
+
+  return {
+    todos,
+    pagination: {
+      page: options.page,
+      limit: options.limit,
+      total,
+      totalPages: Math.ceil(total / options.limit),
+    },
+  };
+};
+
+const getAssignedByMeService = async (userId, query = {}) => {
+  const options = getListOptions(query);
+  const filter = { ...options.filter, userId, assignedTo: { $exists: true, $ne: [] } };
+
+  const [todos, total] = await Promise.all([
+    dbTodo.find(filter)
+      .populate("assignedTo", "fname lname username mail")
+      .sort(options.sort)
+      .skip(options.skip)
+      .limit(options.limit),
+    dbTodo.countDocuments(filter),
+  ]);
+
+  return {
+    todos,
+    pagination: {
+      page: options.page,
+      limit: options.limit,
+      total,
+      totalPages: Math.ceil(total / options.limit),
+    },
+  };
+};
+
+const updateAssignedTodoStatusService = async (id, assigneeId, status) => {
+  if (!mongoose.isValidObjectId(id)) {
+    throw new ApiError(400, "Invalid todo ID");
+  }
+
+  if (!["not-started", "in-progress", "done"].includes(status)) {
+    throw new ApiError(400, "Invalid todo status");
+  }
+
+  const currentTodo = await dbTodo.findOne({
+    _id: id,
+    assignedTo: assigneeId,
+  });
+  if (!currentTodo) throw new ApiError(404, "Assigned todo not found");
+
+  const completedAt =
+    status === "done"
+      ? currentTodo.completedAt || new Date()
+      : null;
+
+  const todo = await dbTodo.findOneAndUpdate(
+    { _id: id, assignedTo: assigneeId },
+    { $set: { status, completedAt } },
+    { new: true, runValidators: true },
+  );
+
+  if (!todo) throw new ApiError(404, "Assigned todo not found");
+  return todo;
 };
 
 const deleteTodoService = async (id, userId) => {
