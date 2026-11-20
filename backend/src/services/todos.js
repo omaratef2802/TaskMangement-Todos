@@ -239,8 +239,19 @@ const getAllTodosService = async (query = {}) => {
 };
 
 const getTodoStatsService = async (userId) => {
-  const [total, notStarted, inProgress, completed, overdue, low, medium, high] =
-    await Promise.all([
+  const [
+    total,
+    notStarted,
+    inProgress,
+    completed,
+    overdue,
+    low,
+    medium,
+    high,
+    assignedToMe,
+    assignedByMe,
+    unassigned,
+  ] = await Promise.all([
       dbTodo.countDocuments({ userId }),
       dbTodo.countDocuments({ userId, status: "not-started" }),
       dbTodo.countDocuments({ userId, status: "in-progress" }),
@@ -253,6 +264,9 @@ const getTodoStatsService = async (userId) => {
       dbTodo.countDocuments({ userId, priority: "low" }),
       dbTodo.countDocuments({ userId, priority: "medium" }),
       dbTodo.countDocuments({ userId, priority: "high" }),
+      dbTodo.countDocuments({ assignedTo: userId, userId: { $ne: userId } }),
+      dbTodo.countDocuments({ userId, assignedTo: { $exists: true, $ne: [] } }),
+      dbTodo.countDocuments({ userId, assignedTo: { $size: 0 } }),
     ]);
 
   return {
@@ -262,6 +276,7 @@ const getTodoStatsService = async (userId) => {
     completed,
     overdue,
     priorities: { low, medium, high },
+    assignments: { assignedToMe, assignedByMe, unassigned },
   };
 };
 
@@ -421,8 +436,12 @@ const getAssignableUsersService = async (currentUserId, query = {}) => {
 
   const filter = { _id: { $ne: currentUserId } };
   if (query.search !== undefined) {
-    if (typeof query.search !== "string" || !query.search.trim()) {
-      throw new ApiError(400, "Please provide a valid search value");
+    if (
+      typeof query.search !== "string" ||
+      !query.search.trim() ||
+      query.search.trim().length > 100
+    ) {
+      throw new ApiError(400, "Search must be between 1 and 100 characters");
     }
 
     const search = escapeRegex(query.search.trim());
