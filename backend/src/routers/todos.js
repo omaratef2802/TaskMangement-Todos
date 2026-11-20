@@ -8,6 +8,7 @@ const {
   getTodoById,
   getTodos,
   getAllTodos,
+  getTodoStats,
   deleteTodo,
   clearTodo,
   updateTodo,
@@ -16,6 +17,7 @@ const {
 const { auth, relasedTo } = require("../middlewares/auth");
 
 router.get("/AllTodosUsers", auth, relasedTo("Admin"), getAllTodos);
+router.get("/stats", auth, getTodoStats);
 router.get("/AllTodos", auth, getTodos);
 router.get("/AllTodoByTitle", auth, getTodoByTitle);
 router.get("/AllTodoByStatus", auth, getTodoByStatus);
