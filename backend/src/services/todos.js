@@ -161,7 +161,8 @@ const getTodoByTitleService = async (title, userId) => {
   return await dbTodo.find({
     userId,
     title: { $regex: escapeRegex(title.trim()), $options: "i" },
-  }).sort({ createdAt: -1 });
+  }).populate("assignedTo", "fname lname username image")
+    .sort({ createdAt: -1 });
 };
 
 const getTodoByStatusService = async (status, userId) => {
@@ -298,10 +299,25 @@ const assignTodoService = async (id, ownerId, userIds) => {
   }
 
   const updatedTodo = await dbTodo.findOneAndUpdate(
-    { _id: id, userId: ownerId },
+    {
+      _id: id,
+      userId: ownerId,
+      $expr: {
+        $lte: [
+          { $size: { $ifNull: ["$assignedTo", []] } },
+          20 - newIds.length,
+        ],
+      },
+    },
     { $addToSet: { assignedTo: { $each: normalizedIds } } },
     { new: true, runValidators: true },
   ).populate("assignedTo", "fname lname username image");
+
+  if (!updatedTodo) {
+    const stillOwned = await dbTodo.exists({ _id: id, userId: ownerId });
+    if (!stillOwned) throw new ApiError(404, "Todo not found");
+    throw new ApiError(400, "A todo can have a maximum of 20 assignees");
+  }
 
   return updatedTodo;
 };
