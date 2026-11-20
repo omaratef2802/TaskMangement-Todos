@@ -173,7 +173,7 @@ const getTodoByStatusService = async (status, userId) => {
   }
 
   return await dbTodo.find({ status, userId })
-    .populate("assignedTo", "fname lname username")
+    .populate("assignedTo", "fname lname username image")
     .sort({ createdAt: -1 });
 };
 
@@ -183,7 +183,7 @@ const getTodoByIdService = async (id, userId) => {
   }
 
   const todo = await dbTodo.findOne({ _id: id, userId })
-    .populate("assignedTo", "fname lname username mail");
+    .populate("assignedTo", "fname lname username image");
   if (!todo) throw new ApiError(404, "Todo not found");
 
   return todo;
@@ -195,7 +195,7 @@ const getTodosService = async (userId, query = {}) => {
 
   const [todos, total] = await Promise.all([
     dbTodo.find(filter)
-      .populate("assignedTo", "fname lname username")
+      .populate("assignedTo", "fname lname username image")
       .sort(options.sort)
       .skip(options.skip)
       .limit(options.limit),
@@ -219,7 +219,7 @@ const getAllTodosService = async (query = {}) => {
   const [todos, total] = await Promise.all([
     dbTodo.find(options.filter)
       .populate("userId", "mail username")
-      .populate("assignedTo", "fname lname username")
+      .populate("assignedTo", "fname lname username image")
       .sort(options.sort)
       .skip(options.skip)
       .limit(options.limit),
@@ -301,7 +301,7 @@ const assignTodoService = async (id, ownerId, userIds) => {
     { _id: id, userId: ownerId },
     { $addToSet: { assignedTo: { $each: normalizedIds } } },
     { new: true, runValidators: true },
-  ).populate("assignedTo", "fname lname username mail");
+  ).populate("assignedTo", "fname lname username image");
 
   return updatedTodo;
 };
@@ -319,7 +319,7 @@ const unassignTodoService = async (id, ownerId, userId) => {
     { _id: id, userId: ownerId, assignedTo: userId },
     { $pull: { assignedTo: userId } },
     { new: true, runValidators: true },
-  ).populate("assignedTo", "fname lname username mail");
+  ).populate("assignedTo", "fname lname username image");
 
   if (!todo) throw new ApiError(404, "Todo not found");
   return todo;
@@ -331,8 +331,8 @@ const getAssignedToMeService = async (userId, query = {}) => {
 
   const [todos, total] = await Promise.all([
     dbTodo.find(filter)
-      .populate("userId", "fname lname username mail")
-      .populate("assignedTo", "fname lname username")
+      .populate("userId", "fname lname username image")
+      .populate("assignedTo", "fname lname username image")
       .sort(options.sort)
       .skip(options.skip)
       .limit(options.limit),
@@ -356,7 +356,7 @@ const getAssignedByMeService = async (userId, query = {}) => {
 
   const [todos, total] = await Promise.all([
     dbTodo.find(filter)
-      .populate("assignedTo", "fname lname username mail")
+      .populate("assignedTo", "fname lname username image")
       .sort(options.sort)
       .skip(options.skip)
       .limit(options.limit),
@@ -401,13 +401,12 @@ const getAssignableUsersService = async (currentUserId, query = {}) => {
       { fname: { $regex: search, $options: "i" } },
       { lname: { $regex: search, $options: "i" } },
       { username: { $regex: search, $options: "i" } },
-      { mail: { $regex: search, $options: "i" } },
     ];
   }
 
   const [users, total] = await Promise.all([
     dbUser.find(filter)
-      .select("fname lname username mail image")
+      .select("fname lname username image")
       .sort({ fname: 1, lname: 1 })
       .skip((page - 1) * limit)
       .limit(limit),
