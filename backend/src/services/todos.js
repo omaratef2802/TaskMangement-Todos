@@ -158,7 +158,9 @@ const getTodoByStatusService = async (status, userId) => {
     throw new ApiError(400, "Invalid todo status");
   }
 
-  return await dbTodo.find({ status, userId }).sort({ createdAt: -1 });
+  return await dbTodo.find({ status, userId })
+    .populate("assignedTo", "fname lname username")
+    .sort({ createdAt: -1 });
 };
 
 const getTodoByIdService = async (id, userId) => {
@@ -166,7 +168,8 @@ const getTodoByIdService = async (id, userId) => {
     throw new ApiError(400, "Invalid todo ID");
   }
 
-  const todo = await dbTodo.findOne({ _id: id, userId });
+  const todo = await dbTodo.findOne({ _id: id, userId })
+    .populate("assignedTo", "fname lname username mail");
   if (!todo) throw new ApiError(404, "Todo not found");
 
   return todo;
@@ -178,6 +181,7 @@ const getTodosService = async (userId, query = {}) => {
 
   const [todos, total] = await Promise.all([
     dbTodo.find(filter)
+      .populate("assignedTo", "fname lname username")
       .sort(options.sort)
       .skip(options.skip)
       .limit(options.limit),
@@ -201,6 +205,7 @@ const getAllTodosService = async (query = {}) => {
   const [todos, total] = await Promise.all([
     dbTodo.find(options.filter)
       .populate("userId", "mail username")
+      .populate("assignedTo", "fname lname username")
       .sort(options.sort)
       .skip(options.skip)
       .limit(options.limit),
@@ -254,6 +259,10 @@ const assignTodoService = async (id, ownerId, userIds) => {
     throw new ApiError(400, "Please provide at least one user ID");
   }
 
+  if (userIds.length > 20) {
+    throw new ApiError(400, "You can assign a todo to a maximum of 20 users");
+  }
+
   const normalizedIds = [...new Set(userIds.map((userId) => String(userId)))];
   if (normalizedIds.some((userId) => !mongoose.isValidObjectId(userId))) {
     throw new ApiError(400, "One or more user IDs are invalid");
@@ -286,7 +295,7 @@ const unassignTodoService = async (id, ownerId, userId) => {
   }
 
   const todo = await dbTodo.findOneAndUpdate(
-    { _id: id, userId: ownerId },
+    { _id: id, userId: ownerId, assignedTo: userId },
     { $pull: { assignedTo: userId } },
     { new: true, runValidators: true },
   ).populate("assignedTo", "fname lname username mail");
