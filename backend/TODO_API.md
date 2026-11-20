@@ -55,3 +55,36 @@ Normal lists and stats exclude trashed todos. Delete and clear operations set `d
 `page` (default 1), `limit` (1-100, default 10), `sortBy` (createdAt, updatedAt, deadline, title, status, priority), `order` (asc/desc), `status` (not-started/in-progress/done), `priority` (low/medium/high), `type` (task/todo), `category`, `search` (partial title), `overdue` (true/false). Dates use ISO 8601.
 
 Recurring todos are intentionally not included.
+
+
+## Notifications and Socket.IO
+
+All notification REST endpoints require the same JWT in the `Authorization` header used by the rest of the API (without the `Bearer ` prefix).
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/notifications?page=1&limit=20` | List the current user's notifications |
+| GET | `/api/notifications?isRead=false` | List unread notifications |
+| GET | `/api/notifications/unread-count` | Get unread count |
+| PATCH | `/api/notifications/:id/read` | Mark one notification as read |
+| PATCH | `/api/notifications/read-all` | Mark all notifications as read |
+| DELETE | `/api/notifications/:id` | Delete one notification |
+| DELETE | `/api/notifications/clear` | Clear current user's notifications |
+
+Socket.IO connects to the same HTTP server. The client sends its JWT in the Socket.IO handshake auth object:
+
+```js
+import { io } from "socket.io-client";
+
+const socket = io("http://localhost:3000", {
+  auth: { token: YOUR_JWT_TOKEN },
+});
+
+socket.on("notification:new", (notification) => {
+  console.log(notification);
+});
+```
+
+The server authenticates the socket with the JWT and joins it to a private `user:<userId>` room. Notifications are stored in MongoDB before the `notification:new` event is emitted. Events are currently created for task assignment/removal, assignee status changes, task updates/deletion, comments, and successful 24-hour deadline reminders.
+
+Install dependencies after pulling the changes with `npm install`. For a frontend running on another origin, set `CLIENT_URL` in `.env` to its allowed origin (comma-separated origins are supported). The server defaults to permissive CORS when `CLIENT_URL` is not set; configure it for production.
