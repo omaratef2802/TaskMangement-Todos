@@ -15,7 +15,11 @@ const {
   deleteTodoService,
   clearTodosService,
   updateTodoService,
+  getDeletedTodosService,
+  restoreTodoService,
+  permanentlyDeleteTodoService,
 } = require("../services/todos");
+const collaboration = require("../services/todoCollaboration");
 
 const createTodo = async (req, res, next) => {
   try {
@@ -174,6 +178,39 @@ const updateAssignedTodoStatus = async (req, res, next) => {
   }
 };
 
+const getDeletedTodos = async (req, res, next) => {
+  try { const result = await getDeletedTodosService(req.id, req.query); res.status(200).json({ message: "success", data: result.todos, pagination: result.pagination }); }
+  catch (err) { next(err); }
+};
+const restoreTodo = async (req, res, next) => {
+  try { res.status(200).json({ message: "Todo restored successfully", data: await restoreTodoService(req.params.id, req.id) }); }
+  catch (err) { next(err); }
+};
+const permanentlyDeleteTodo = async (req, res, next) => {
+  try { res.status(200).json(await permanentlyDeleteTodoService(req.params.id, req.id)); }
+  catch (err) { next(err); }
+};
+const getTodoActivity = async (req, res, next) => {
+  try { const result = await collaboration.getTodoActivityService(req.params.id, req.id, req.query); res.status(200).json({ message: "success", data: result.activities, pagination: result.pagination }); }
+  catch (err) { next(err); }
+};
+const getTodoComments = async (req, res, next) => {
+  try { const result = await collaboration.getTodoCommentsService(req.params.todoId, req.id, req.query); res.status(200).json({ message: "success", data: result.comments, pagination: result.pagination }); }
+  catch (err) { next(err); }
+};
+const addTodoComment = async (req, res, next) => {
+  try { res.status(201).json({ message: "Comment added successfully", data: await collaboration.addTodoCommentService(req.params.todoId, req.id, req.body.text) }); }
+  catch (err) { next(err); }
+};
+const updateTodoComment = async (req, res, next) => {
+  try { res.status(200).json({ message: "Comment updated successfully", data: await collaboration.updateTodoCommentService(req.params.todoId, req.params.commentId, req.id, req.body.text) }); }
+  catch (err) { next(err); }
+};
+const deleteTodoComment = async (req, res, next) => {
+  try { await collaboration.deleteTodoCommentService(req.params.todoId, req.params.commentId, req.id); res.status(200).json({ message: "Comment deleted successfully" }); }
+  catch (err) { next(err); }
+};
+
 const deleteTodo = async (req, res, next) => {
   try {
     await deleteTodoService(req.params.id, req.id);
@@ -221,4 +258,12 @@ module.exports = {
   deleteTodo,
   clearTodo,
   updateTodo,
+  getDeletedTodos,
+  restoreTodo,
+  permanentlyDeleteTodo,
+  getTodoActivity,
+  getTodoComments,
+  addTodoComment,
+  updateTodoComment,
+  deleteTodoComment,
 };

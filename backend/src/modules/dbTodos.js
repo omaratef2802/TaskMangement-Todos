@@ -51,6 +51,12 @@ const todoSchema = mongoose.Schema(
         ref: "users",
       },
     ],
+    assignedStatuses: [{
+      userId: { type: mongoose.Schema.Types.ObjectId, ref: "users", required: true },
+      status: { type: String, enum: ["not-started", "in-progress", "done"], default: "not-started" },
+      completedAt: { type: Date, default: null },
+    }],
+    deletedAt: { type: Date, default: null },
   },
   { timestamps: true },
 );
@@ -58,6 +64,8 @@ const todoSchema = mongoose.Schema(
 todoSchema.index({ userId: 1, createdAt: -1 });
 todoSchema.index({ userId: 1, status: 1 });
 todoSchema.index({ assignedTo: 1, createdAt: -1 });
+todoSchema.index({ deletedAt: 1, createdAt: -1 });
+todoSchema.index({ "assignedStatuses.userId": 1, createdAt: -1 });
 
 const todoModule = mongoose.model("todos", todoSchema);
 
