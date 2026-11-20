@@ -20,6 +20,7 @@ const {
   permanentlyDeleteTodoService,
 } = require("../services/todos");
 const collaboration = require("../services/todoCollaboration");
+const { notifyUsers, notifyTodoParticipants } = require("../services/notifications");
 
 const createTodo = async (req, res, next) => {
   try {
@@ -107,6 +108,10 @@ const assignTodo = async (req, res, next) => {
       req.id,
       req.body.userIds,
     );
+    await notifyUsers(req.body.userIds, {
+      actorId: req.id, todoId: todo._id, type: "todo_assigned",
+      title: "New task assigned", message: `You were assigned to "${todo.title}".`,
+    });
     res.status(200).json({ message: "Users assigned successfully", data: todo });
   } catch (err) {
     next(err);
@@ -120,6 +125,10 @@ const unassignTodo = async (req, res, next) => {
       req.id,
       req.body.userId,
     );
+    await notifyUsers([req.body.userId], {
+      actorId: req.id, todoId: todo._id, type: "todo_unassigned",
+      title: "Task assignment removed", message: `You were removed from "${todo.title}".`,
+    });
     res.status(200).json({ message: "User unassigned successfully", data: todo });
   } catch (err) {
     next(err);
@@ -172,6 +181,10 @@ const updateAssignedTodoStatus = async (req, res, next) => {
       req.id,
       req.body.status,
     );
+    await notifyUsers([todo.userId], {
+      actorId: req.id, todoId: todo._id, type: "status_updated",
+      title: "Assigned task updated", message: `An assignee changed "${todo.title}" to ${req.body.status}.`,
+    });
     res.status(200).json({ message: "Todo status updated successfully", data: todo });
   } catch (err) {
     next(err);
@@ -199,8 +212,14 @@ const getTodoComments = async (req, res, next) => {
   catch (err) { next(err); }
 };
 const addTodoComment = async (req, res, next) => {
-  try { res.status(201).json({ message: "Comment added successfully", data: await collaboration.addTodoCommentService(req.params.todoId, req.id, req.body.text) }); }
-  catch (err) { next(err); }
+  try {
+    const comment = await collaboration.addTodoCommentService(req.params.todoId, req.id, req.body.text);
+    await notifyTodoParticipants(req.params.todoId, req.id, {
+      type: "comment_added", title: "New task comment",
+      message: "A new comment was added to a task you participate in.",
+    });
+    res.status(201).json({ message: "Comment added successfully", data: comment });
+  } catch (err) { next(err); }
 };
 const updateTodoComment = async (req, res, next) => {
   try { res.status(200).json({ message: "Comment updated successfully", data: await collaboration.updateTodoCommentService(req.params.todoId, req.params.commentId, req.id, req.body.text) }); }
@@ -213,7 +232,11 @@ const deleteTodoComment = async (req, res, next) => {
 
 const deleteTodo = async (req, res, next) => {
   try {
-    await deleteTodoService(req.params.id, req.id);
+    const todo = await deleteTodoService(req.params.id, req.id);
+    await notifyUsers(todo.assignedTo, {
+      actorId: req.id, todoId: todo._id, type: "todo_deleted",
+      title: "Task moved to trash", message: `"${todo.title}" was moved to trash by its owner.`,
+    });
     res.status(200).json({ message: "Todo moved to trash successfully" });
   } catch (err) {
     next(err);
@@ -235,6 +258,10 @@ const clearTodo = async (req, res, next) => {
 const updateTodo = async (req, res, next) => {
   try {
     const todo = await updateTodoService(req.params.id, req.id, req.body);
+    await notifyUsers(todo.assignedTo, {
+      actorId: req.id, todoId: todo._id, type: "todo_updated",
+      title: "Assigned task updated", message: `"${todo.title}" was updated by its owner.`,
+    });
     res.status(200).json({ message: "Todo updated successfully", data: todo });
   } catch (err) {
     next(err);
