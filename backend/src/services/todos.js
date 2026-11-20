@@ -283,6 +283,10 @@ const assignTodoService = async (id, ownerId, userIds) => {
     throw new ApiError(400, "One or more user IDs are invalid");
   }
 
+  if (normalizedIds.includes(String(ownerId))) {
+    throw new ApiError(400, "You cannot assign a todo to yourself");
+  }
+
   const todo = await dbTodo.findOne({ _id: id, userId: ownerId });
   if (!todo) throw new ApiError(404, "Todo not found");
 
@@ -337,7 +341,9 @@ const unassignTodoService = async (id, ownerId, userId) => {
     { new: true, runValidators: true },
   ).populate("assignedTo", "fname lname username image");
 
-  if (!todo) throw new ApiError(404, "Todo not found");
+  if (!todo) {
+    throw new ApiError(404, "Todo not found or user is not assigned");
+  }
   return todo;
 };
 
