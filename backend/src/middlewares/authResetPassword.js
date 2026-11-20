@@ -25,11 +25,11 @@ const authResetPassword = (stage) => {
       return next(new ApiError(401, "Invalid reset password token"));
     }
 
-    if (stage === "verify" && decoded.otpVerified === true) {
-      return next(new ApiError(401, "OTP already verified"));
-    }
-
-    if (stage === "reset") {
+    if (stage === "verify") {
+      if (decoded.otpVerified === true || !decoded.otpId) {
+        return next(new ApiError(401, "Invalid or already verified OTP token"));
+      }
+    } else if (stage === "reset") {
       if (decoded.otpVerified !== true) {
         return next(new ApiError(401, "You must verify OTP first"));
       }
@@ -47,11 +47,12 @@ const authResetPassword = (stage) => {
       } catch (err) {
         return next(err);
       }
-    } else if (stage !== "verify") {
+    } else {
       return next(new ApiError(400, "Invalid password reset stage"));
     }
 
     req.id = decoded.userId;
+    req.otpId = decoded.otpId;
     next();
   };
 };
