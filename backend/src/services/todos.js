@@ -267,6 +267,7 @@ const getTodoStatsService = async (userId) => {
       dbTodo.countDocuments({ userId, deletedAt: null, status: "done" }),
       dbTodo.countDocuments({
         userId,
+        deletedAt: null,
         status: { $ne: "done" },
         deadline: { $lt: new Date() },
       }),
@@ -373,8 +374,7 @@ const assignTodoService = async (id, ownerId, userIds) => {
   await logTodoActivity(id, ownerId, "assigned", { userIds: normalizedIds });
   return await dbTodo.findById(id)
     .populate("assignedTo", "fname lname username image")
-      .populate("assignedStatuses.userId", "fname lname username image")
-    .populate("assignedStatuses.userId", "fname lname username image");
+      .populate("assignedStatuses.userId", "fname lname username image");
 };
 
 const unassignTodoService = async (id, ownerId, userId) => {

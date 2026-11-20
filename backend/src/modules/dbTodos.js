@@ -51,11 +51,14 @@ const todoSchema = mongoose.Schema(
         ref: "users",
       },
     ],
-    assignedStatuses: [{
-      userId: { type: mongoose.Schema.Types.ObjectId, ref: "users", required: true },
-      status: { type: String, enum: ["not-started", "in-progress", "done"], default: "not-started" },
-      completedAt: { type: Date, default: null },
-    }],
+    assignedStatuses: {
+      type: [new mongoose.Schema({
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: "users", required: true },
+        status: { type: String, enum: ["not-started", "in-progress", "done"], default: "not-started" },
+        completedAt: { type: Date, default: null },
+      }, { _id: false })],
+      default: [],
+    },
     deletedAt: { type: Date, default: null },
   },
   { timestamps: true },
