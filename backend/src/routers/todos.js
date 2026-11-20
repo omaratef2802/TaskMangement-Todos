@@ -9,6 +9,11 @@ const {
   getTodos,
   getAllTodos,
   getTodoStats,
+  assignTodo,
+  unassignTodo,
+  getAssignedToMe,
+  getAssignedByMe,
+  updateAssignedTodoStatus,
   deleteTodo,
   clearTodo,
   updateTodo,
@@ -18,6 +23,11 @@ const { auth, relasedTo } = require("../middlewares/auth");
 
 router.get("/AllTodosUsers", auth, relasedTo("Admin"), getAllTodos);
 router.get("/stats", auth, getTodoStats);
+router.get("/assignedToMe", auth, getAssignedToMe);
+router.get("/assignedByMe", auth, getAssignedByMe);
+router.patch("/assign/:id", auth, assignTodo);
+router.patch("/unassign/:id", auth, unassignTodo);
+router.patch("/assigned/:id/status", auth, updateAssignedTodoStatus);
 router.get("/AllTodos", auth, getTodos);
 router.get("/AllTodoByTitle", auth, getTodoByTitle);
 router.get("/AllTodoByStatus", auth, getTodoByStatus);
