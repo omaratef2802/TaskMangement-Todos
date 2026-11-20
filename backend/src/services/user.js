@@ -99,7 +99,7 @@ const forgetPassword = async (mail) => {
   await dbUser.updateOne({ _id: user._id }, { $unset: { resetTokenHash: 1 } });
 
   const otpGen = crypto.randomInt(100000, 1000000).toString();
-  await dbOtp.create({
+  const otpDoc = await dbOtp.create({
     otp: otpGen,
     userId: user._id,
     expireAt: new Date(Date.now() + 15 * 60 * 1000),
@@ -112,25 +112,29 @@ const forgetPassword = async (mail) => {
       `<h2>Password reset</h2><p>Hello ${user.fname}</p><h1>${otpGen}</h1><p>This OTP expires in 15 minutes.</p>`,
     );
   } catch (error) {
-    await dbOtp.deleteMany({ userId: user._id });
+    await dbOtp.deleteOne({ _id: otpDoc._id });
     throw error;
   }
 
   return genToken(process.env.RESET_PASSWORD_SECRET, "15m", {
     userId: user._id,
+    otpId: otpDoc._id,
     resetPassword: true,
   });
 };
 
-const verifyOTP = async (userId, otp) => {
-  const otpDb = await dbOtp.findOne({ userId });
+const verifyOTP = async (userId, otpId, otp) => {
+  const user = await dbUser.findById(userId);
+  if (!user) throw new ApiError(404, "User not found");
+
+  const otpDb = await dbOtp.findOne({ _id: otpId, userId });
   if (!otpDb) {
-    throw new ApiError(400, "OTP not found or expired");
+    throw new ApiError(400, "OTP not found or expired. Request a new OTP");
   }
 
   if (otpDb.expireAt <= new Date()) {
     await dbOtp.deleteOne({ _id: otpDb._id });
-    throw new ApiError(400, "OTP expired");
+    throw new ApiError(400, "OTP expired. Request a new OTP");
   }
 
   if (otpDb.attempts >= 3) {
@@ -138,13 +142,14 @@ const verifyOTP = async (userId, otp) => {
     throw new ApiError(429, "Too many incorrect OTP attempts. Request a new OTP");
   }
 
-  const isValid = String(otp) === otpDb.otp;
-  if (!isValid) {
+  if (String(otp) !== otpDb.otp) {
     otpDb.attempts += 1;
+
     if (otpDb.attempts >= 3) {
       await dbOtp.deleteOne({ _id: otpDb._id });
       throw new ApiError(429, "Too many incorrect OTP attempts. Request a new OTP");
     }
+
     await otpDb.save();
     throw new ApiError(400, "The OTP is incorrect");
   }
@@ -152,25 +157,43 @@ const verifyOTP = async (userId, otp) => {
   await dbOtp.deleteOne({ _id: otpDb._id });
 
   const resetToken = genToken(process.env.RESET_PASSWORD_SECRET, "15m", {
-    userId,
+    userId: user._id,
     resetPassword: true,
     otpVerified: true,
   });
-  const user = await dbUser.findById(userId).select("+resetTokenHash");
-  if (!user) throw new ApiError(404, "User not found");
 
-  user.resetTokenHash = await bcrypt.hash(resetToken, 10);
-  await user.save();
+  const resetTokenHash = await bcrypt.hash(resetToken, 10);
+  const result = await dbUser.updateOne(
+    { _id: user._id },
+    { $set: { resetTokenHash } },
+  );
+
+  if (result.matchedCount !== 1) {
+    throw new ApiError(404, "User not found");
+  }
+
   return resetToken;
 };
 
 const resetPassword = async (userId, newPassword) => {
   const user = await dbUser.findById(userId).select("+resetTokenHash");
-  if (!user) throw new ApiError(404, "User not found");
+  if (!user || !user.resetTokenHash) {
+    throw new ApiError(404, "User not found or reset token is invalid");
+  }
 
-  user.password = newPassword;
-  user.resetTokenHash = undefined;
-  await user.save();
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+  const result = await dbUser.updateOne(
+    { _id: userId, resetTokenHash: user.resetTokenHash },
+    {
+      $set: { password: hashedPassword },
+      $unset: { resetTokenHash: 1 },
+    },
+  );
+
+  if (result.modifiedCount !== 1) {
+    throw new ApiError(400, "Reset token is invalid or already used");
+  }
+
   return { message: "Password reset successfully" };
 };
 
