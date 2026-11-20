@@ -21,8 +21,11 @@ passport.use(
 
         user = await dbUser.findOne({ mail: email });
         if (user) {
-          user.googleId = profile.id;
-          await user.save();
+          user = await dbUser.findByIdAndUpdate(
+            user._id,
+            { $set: { googleId: profile.id } },
+            { new: true },
+          );
           return done(null, user);
         }
 
