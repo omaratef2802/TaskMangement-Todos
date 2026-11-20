@@ -295,6 +295,9 @@ const assignTodoService = async (id, ownerId, userIds) => {
     throw new ApiError(404, "One or more users were not found");
   }
 
+  const objectIds = normalizedIds.map(
+    (userId) => new mongoose.Types.ObjectId(userId),
+  );
   const newIds = normalizedIds.filter(
     (userId) => !todo.assignedTo.some((assignedId) => String(assignedId) === userId),
   );
@@ -308,12 +311,16 @@ const assignTodoService = async (id, ownerId, userIds) => {
       userId: ownerId,
       $expr: {
         $lte: [
-          { $size: { $ifNull: ["$assignedTo", []] } },
-          20 - newIds.length,
+          {
+            $size: {
+              $setUnion: [{ $ifNull: ["$assignedTo", []] }, objectIds],
+            },
+          },
+          20,
         ],
       },
     },
-    { $addToSet: { assignedTo: { $each: normalizedIds } } },
+    { $addToSet: { assignedTo: { $each: objectIds } } },
     { new: true, runValidators: true },
   ).populate("assignedTo", "fname lname username image");
 
