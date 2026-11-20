@@ -6,6 +6,11 @@ const {
   getTodosService,
   getAllTodosService,
   getTodoStatsService,
+  assignTodoService,
+  unassignTodoService,
+  getAssignedToMeService,
+  getAssignedByMeService,
+  updateAssignedTodoStatusService,
   deleteTodoService,
   clearTodosService,
   updateTodoService,
@@ -90,6 +95,71 @@ const getTodoStats = async (req, res, next) => {
   }
 };
 
+const assignTodo = async (req, res, next) => {
+  try {
+    const todo = await assignTodoService(
+      req.params.id,
+      req.id,
+      req.body.userIds,
+    );
+    res.status(200).json({ message: "Users assigned successfully", data: todo });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const unassignTodo = async (req, res, next) => {
+  try {
+    const todo = await unassignTodoService(
+      req.params.id,
+      req.id,
+      req.body.userId,
+    );
+    res.status(200).json({ message: "User unassigned successfully", data: todo });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const getAssignedToMe = async (req, res, next) => {
+  try {
+    const result = await getAssignedToMeService(req.id, req.query);
+    res.status(200).json({
+      message: "success",
+      data: result.todos,
+      pagination: result.pagination,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const getAssignedByMe = async (req, res, next) => {
+  try {
+    const result = await getAssignedByMeService(req.id, req.query);
+    res.status(200).json({
+      message: "success",
+      data: result.todos,
+      pagination: result.pagination,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const updateAssignedTodoStatus = async (req, res, next) => {
+  try {
+    const todo = await updateAssignedTodoStatusService(
+      req.params.id,
+      req.id,
+      req.body.status,
+    );
+    res.status(200).json({ message: "Todo status updated successfully", data: todo });
+  } catch (err) {
+    next(err);
+  }
+};
+
 const deleteTodo = async (req, res, next) => {
   try {
     await deleteTodoService(req.params.id, req.id);
@@ -128,6 +198,11 @@ module.exports = {
   getTodos,
   getAllTodos,
   getTodoStats,
+  assignTodo,
+  unassignTodo,
+  getAssignedToMe,
+  getAssignedByMe,
+  updateAssignedTodoStatus,
   deleteTodo,
   clearTodo,
   updateTodo,
