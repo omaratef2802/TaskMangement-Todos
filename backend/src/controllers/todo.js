@@ -3,8 +3,9 @@ const {
   getTodoByTitleService,
   getTodoByStatusService,
   getTodoByIdService,
-  getTodosSercviec,
+  getTodosService,
   getAllTodosService,
+  getTodoStatsService,
   deleteTodoService,
   clearTodosService,
   updateTodoService,
@@ -54,9 +55,11 @@ const getTodoById = async (req, res, next) => {
 
 const getTodos = async (req, res, next) => {
   try {
+    const result = await getTodosService(req.id, req.query);
     res.status(200).json({
       message: "success",
-      data: await getTodosSercviec(req.id),
+      data: result.todos,
+      pagination: result.pagination,
     });
   } catch (err) {
     next(err);
@@ -65,9 +68,22 @@ const getTodos = async (req, res, next) => {
 
 const getAllTodos = async (req, res, next) => {
   try {
+    const result = await getAllTodosService(req.query);
     res.status(200).json({
       message: "success",
-      data: await getAllTodosService(),
+      data: result.todos,
+      pagination: result.pagination,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const getTodoStats = async (req, res, next) => {
+  try {
+    res.status(200).json({
+      message: "success",
+      data: await getTodoStatsService(req.id),
     });
   } catch (err) {
     next(err);
@@ -111,6 +127,7 @@ module.exports = {
   getTodoById,
   getTodos,
   getAllTodos,
+  getTodoStats,
   deleteTodo,
   clearTodo,
   updateTodo,
