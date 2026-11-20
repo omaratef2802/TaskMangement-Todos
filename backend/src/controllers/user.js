@@ -154,7 +154,7 @@ const VerifyOTP = async (req, res, next) => {
 
     res.status(200).json({
       message: "OTP verified successfully",
-      data: await verifyOTP(req.id, otp),
+      data: await verifyOTP(req.id, req.otpId, otp),
     });
   } catch (err) {
     next(err);
