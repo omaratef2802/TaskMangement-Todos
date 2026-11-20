@@ -10,6 +10,7 @@ const {
   unassignTodoService,
   getAssignedToMeService,
   getAssignedByMeService,
+  getAssignableUsersService,
   updateAssignedTodoStatusService,
   deleteTodoService,
   clearTodosService,
@@ -147,6 +148,19 @@ const getAssignedByMe = async (req, res, next) => {
   }
 };
 
+const getAssignableUsers = async (req, res, next) => {
+  try {
+    const result = await getAssignableUsersService(req.id, req.query);
+    res.status(200).json({
+      message: "success",
+      data: result.users,
+      pagination: result.pagination,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 const updateAssignedTodoStatus = async (req, res, next) => {
   try {
     const todo = await updateAssignedTodoStatusService(
@@ -202,6 +216,7 @@ module.exports = {
   unassignTodo,
   getAssignedToMe,
   getAssignedByMe,
+  getAssignableUsers,
   updateAssignedTodoStatus,
   deleteTodo,
   clearTodo,
