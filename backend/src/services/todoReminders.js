@@ -2,6 +2,7 @@ const dbTodo = require("../modules/dbTodos");
 const dbUser = require("../modules/dbUser");
 const dbReminder = require("../modules/dbTodoReminder");
 const mailTransport = require("../config/nodemailer");
+const { createNotification } = require("./notifications");
 let started = false;
 
 const migrateAssigneeStatuses = async () => {
@@ -62,6 +63,11 @@ const sendDueTodoReminders = async () => {
           subject: "Todo deadline reminder",
           text: `Hello ${user.fname || "there"}, your todo "${todo.title}" is due at ${todo.deadline.toISOString()}.`,
           html: `<p>Hello ${user.fname || "there"},</p><p>Your todo <strong>${todo.title}</strong> is due at <strong>${todo.deadline.toISOString()}</strong>.</p>`,
+        });
+        await createNotification({
+          userId, todoId: todo._id, type: "deadline_reminder",
+          title: "Todo deadline approaching",
+          message: `"${todo.title}" is due within 24 hours.`,
         });
         await dbReminder.updateOne(
           { _id: reminder._id },
