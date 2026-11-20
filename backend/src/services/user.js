@@ -99,10 +99,8 @@ const forgetPassword = async (mail) => {
   await dbUser.updateOne({ _id: user._id }, { $unset: { resetTokenHash: 1 } });
 
   const otpGen = crypto.randomInt(100000, 1000000).toString();
-  const otpHash = await bcrypt.hash(otpGen, 10);
-
   await dbOtp.create({
-    otp: otpHash,
+    otp: otpGen,
     userId: user._id,
     expireAt: new Date(Date.now() + 15 * 60 * 1000),
   });
@@ -135,15 +133,15 @@ const verifyOTP = async (userId, otp) => {
     throw new ApiError(400, "OTP expired");
   }
 
-  if (otpDb.attempts >= 5) {
+  if (otpDb.attempts >= 3) {
     await dbOtp.deleteOne({ _id: otpDb._id });
     throw new ApiError(429, "Too many incorrect OTP attempts. Request a new OTP");
   }
 
-  const isValid = await bcrypt.compare(String(otp), otpDb.otp);
+  const isValid = String(otp) === otpDb.otp;
   if (!isValid) {
     otpDb.attempts += 1;
-    if (otpDb.attempts >= 5) {
+    if (otpDb.attempts >= 3) {
       await dbOtp.deleteOne({ _id: otpDb._id });
       throw new ApiError(429, "Too many incorrect OTP attempts. Request a new OTP");
     }
