@@ -68,7 +68,7 @@ const updataInfoToUser = async (id, data) => {
 };
 
 const updatePassw = async (confirmPassword, newPassword, password, id) => {
-  const user = await dbUser.findById(id).select("+resetTokenHash");
+  const user = await dbUser.findById(id);
   if (!user) throw new ApiError(404, "The user was not found");
 
   if (confirmPassword !== newPassword) {
@@ -81,10 +81,18 @@ const updatePassw = async (confirmPassword, newPassword, password, id) => {
     if (!verify) throw new ApiError(401, "The current password is incorrect");
   }
 
-  user.password = newPassword;
-  user.resetTokenHash = undefined;
-  await user.save();
-  return user;
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+  const updatedUser = await dbUser.findByIdAndUpdate(
+    id,
+    {
+      $set: { password: hashedPassword },
+      $unset: { resetTokenHash: 1 },
+    },
+    { new: true, runValidators: true },
+  );
+
+  if (!updatedUser) throw new ApiError(404, "The user was not found");
+  return updatedUser;
 };
 
 const deleteuserFun = async (id) => {
@@ -202,9 +210,14 @@ const uploadUserImage = async (id, file) => {
   if (!user) throw new ApiError(404, "User not found");
 
   const result = await uploadImage(file, id);
-  user.image = result.secure_url;
-  await user.save();
-  return user;
+  const updatedUser = await dbUser.findByIdAndUpdate(
+    id,
+    { $set: { image: result.secure_url } },
+    { new: true },
+  );
+
+  if (!updatedUser) throw new ApiError(404, "User not found");
+  return updatedUser;
 };
 
 module.exports = {
