@@ -86,9 +86,24 @@ const getListOptions = (query = {}) => {
     if (!["true", "false"].includes(query.overdue)) {
       throw new ApiError(400, "Overdue must be true or false");
     }
+    const now = new Date();
     if (query.overdue === "true") {
-      filter.deadline = { $lt: new Date() };
-      filter.status = { $ne: "done" };
+      filter.$and = [
+        ...(filter.$and || []),
+        { deadline: { $lt: now } },
+        { status: { $ne: "done" } },
+      ];
+    } else {
+      filter.$and = [
+        ...(filter.$and || []),
+        {
+          $or: [
+            { deadline: { $gte: now } },
+            { deadline: null },
+            { status: "done" },
+          ],
+        },
+      ];
     }
   }
 
