@@ -50,6 +50,8 @@ Supported query parameters:
 
 List responses include `data` and a `pagination` object with `page`, `limit`, `total`, and `totalPages`.
 
+The `GET /api/todo/stats` response also includes assignment counters under `assignments`: `assignedToMe`, `assignedByMe`, and `unassigned`.
+
 ## Team assignment
 
 A todo can be assigned to up to 20 users. The todo owner manages the assignment. All assignees currently share the todo's single status field: when one assignee changes the status, the status changes for the whole todo.
