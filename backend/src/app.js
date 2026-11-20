@@ -16,9 +16,11 @@ app.use(passport.initialize());
 
 const users = require("./routers/users");
 const todos = require("./routers/todos");
+const notifications = require("./routers/notifications");
 
 app.use("/api/user", users);
 app.use("/api/todo", todos);
+app.use("/api/notifications", notifications);
 
 app.use((req, res, next) => {
   next(new ApiError(404, "Route not found"));
@@ -45,9 +47,7 @@ app.use((err, req, res, next) => {
     message = "Invalid JSON body";
   }
 
-  res.status(statusCode).json({
-    message,
-  });
+  res.status(statusCode).json({ message });
 });
 
 module.exports = { app };
