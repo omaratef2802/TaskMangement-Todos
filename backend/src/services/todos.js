@@ -574,8 +574,20 @@ const restoreTodoService = async (id, userId) => {
 
 const permanentlyDeleteTodoService = async (id, userId) => {
   if (!mongoose.isValidObjectId(id)) throw new ApiError(400, "Invalid todo ID");
-  const todo = await dbTodo.findOneAndDelete({ _id: id, userId, deletedAt: { $ne: null } });
+  const todo = await dbTodo.findOne({ _id: id, userId, deletedAt: { $ne: null } });
   if (!todo) throw new ApiError(404, "Deleted todo not found");
+
+  const cloudinary = require("../config/cloudinary");
+  await Promise.allSettled(
+    (todo.attachments || []).map((file) =>
+      cloudinary.uploader.destroy(file.publicId, {
+        resource_type: file.resourceType,
+      }),
+    ),
+  );
+
+  await dbTodo.deleteOne({ _id: id, userId, deletedAt: { $ne: null } });
+
   const activity = require("../modules/dbTodoActivity");
   const comments = require("../modules/dbTodoComment");
   const reminders = require("../modules/dbTodoReminder");
