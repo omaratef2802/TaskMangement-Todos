@@ -1,6 +1,6 @@
 # TaskFlow — Angular Frontend
 
-A standalone Angular 22 frontend for the Todos backend in this repository. The frontend lives in this directory and is maintained on the independent branch `Front-end/omaratef`.
+A standalone Angular 22 frontend for the Todos API. This branch is based on `main` and contains frontend files only; backend implementation remains on its own branch.
 
 ## Requirements
 - Node.js 24+
