@@ -1,12 +1,20 @@
 const mongoose = require("mongoose");
 
+const attachmentSchema = new mongoose.Schema({
+  publicId: { type: String, required: true },
+  url: { type: String, required: true },
+  name: { type: String, required: true, trim: true },
+  format: { type: String, default: "" },
+  mimeType: { type: String, required: true },
+  resourceType: { type: String, enum: ["image", "raw", "video"], default: "raw" },
+  size: { type: Number, required: true },
+  uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: "users", required: true },
+  uploadedAt: { type: Date, default: Date.now },
+});
+
 const todoSchema = mongoose.Schema(
   {
-    type: {
-      type: String,
-      enum: ["task", "todo"],
-      default: "todo",
-    },
+    type: { type: String, enum: ["task", "todo"], default: "todo" },
     title: {
       type: String,
       required: [true, "Title is required"],
@@ -19,38 +27,17 @@ const todoSchema = mongoose.Schema(
       enum: ["not-started", "in-progress", "done"],
       default: "not-started",
     },
-    description: {
-      type: String,
-      default: "",
-    },
+    description: { type: String, default: "" },
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "users",
       required: [true, "the user id is required"],
     },
-    deadline: {
-      type: Date,
-    },
-    completedAt: {
-      type: Date,
-      default: null,
-    },
-    category: {
-      type: String,
-      default: "general",
-      trim: true,
-    },
-    priority: {
-      type: String,
-      enum: ["low", "medium", "high"],
-      default: "medium",
-    },
-    assignedTo: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "users",
-      },
-    ],
+    deadline: { type: Date },
+    completedAt: { type: Date, default: null },
+    category: { type: String, default: "general", trim: true },
+    priority: { type: String, enum: ["low", "medium", "high"], default: "medium" },
+    assignedTo: [{ type: mongoose.Schema.Types.ObjectId, ref: "users" }],
     assignedStatuses: {
       type: [new mongoose.Schema({
         userId: { type: mongoose.Schema.Types.ObjectId, ref: "users", required: true },
@@ -59,6 +46,7 @@ const todoSchema = mongoose.Schema(
       }, { _id: false })],
       default: [],
     },
+    attachments: { type: [attachmentSchema], default: [] },
     deletedAt: { type: Date, default: null },
   },
   { timestamps: true },
