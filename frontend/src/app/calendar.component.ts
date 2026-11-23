@@ -19,7 +19,7 @@ export class CalendarComponent implements OnInit{
  calendarDays():CalendarCell[]{const first=this.month(),start=new Date(first.getFullYear(),first.getMonth(),1-first.getDay());const cells:CalendarCell[]=[];for(let i=0;i<42;i++){const date=new Date(start.getFullYear(),start.getMonth(),start.getDate()+i);const same=date.getMonth()===first.getMonth();const items=this.tasks().filter(t=>{const x=new Date(t.deadline!);return x.getFullYear()===date.getFullYear()&&x.getMonth()===date.getMonth()&&x.getDate()===date.getDate();});cells.push({date:same?date:null,items,key:this.key(date)});}return cells;}
  selectedTasks():Todo[]{const d=this.selectedDate();return this.tasks().filter(t=>{const x=new Date(t.deadline!);return x.getFullYear()===d.getFullYear()&&x.getMonth()===d.getMonth()&&x.getDate()===d.getDate();}).sort((a,b)=>new Date(a.deadline!).getTime()-new Date(b.deadline!).getTime());}
  selectDay(c:CalendarCell):void{if(c.date){this.selectedDate.set(c.date);this.selectedKey.set(c.key);}}
- shiftMonth(n:number):void{const d=this.month();this.month.set(new Date(d.getFullYear(),d.getMonth()+n,1));}
+ shiftMonth(n:number):void{const d=this.month();const next=new Date(d.getFullYear(),d.getMonth()+n,1);this.month.set(next);this.selectedDate.set(next);this.selectedKey.set(this.key(next));}
  goToday():void{const d=new Date();this.month.set(new Date(d.getFullYear(),d.getMonth(),1));this.selectedDate.set(d);this.selectedKey.set(this.key(d));}
  isToday(d:Date|null):boolean{return !!d&&this.key(d)===this.key(new Date());}
 }
