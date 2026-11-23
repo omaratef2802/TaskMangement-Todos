@@ -67,3 +67,7 @@ The repository GitHub Actions workflow also builds this frontend on pushes to th
 
 ## Branch separation
 This branch contains the frontend implementation independently. It is not merged into `Backend-omaratef` or `main`. Integration should happen only after the frontend and backend are reviewed together.
+
+## Integration note
+
+The current backend Google OAuth callback responds with a JSON token payload rather than redirecting back into the Angular application. The frontend keeps the backend branch untouched; completing Google sign-in end-to-end requires a small callback redirect integration on the separate backend branch. Email/password authentication and OTP password recovery use the existing API directly.
