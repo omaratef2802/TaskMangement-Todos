@@ -30,6 +30,17 @@ Assignment payloads: `{ "userIds": ["USER_ID_1", "USER_ID_2"] }`; unassign: `{ "
 
 Each assignee has a separate status in `assignedStatuses`; updating one assignee does not change the owner's status or another assignee's status. Maximum 20 assignees.
 
+## Attachments
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/:id/attachments` | Upload one or more task attachments |
+| DELETE | `/:id/attachments/:attachmentId` | Delete an attachment |
+
+Upload using `multipart/form-data` with the field name `attachments`. Send up to 5 files per request, 10 MB per file, and 20 files per task. Supported types: JPG, PNG, WEBP, PDF, TXT, CSV, DOC, DOCX, XLS, XLSX, PPT, PPTX, and ZIP.
+
+The task owner and assigned users can upload and view attachments. Only the task owner or the user who uploaded a specific file can delete it. Files are stored in Cloudinary; metadata (original name, secure URL, MIME type, size, uploader and upload date) is stored on the task document. The existing profile-image Multer configuration is kept separate and unchanged.
+
 ## Comments and activity
 
 | Method | Endpoint | Description |
@@ -40,7 +51,7 @@ Each assignee has a separate status in `assignedStatuses`; updating one assignee
 | DELETE | `/comments/:todoId/:commentId` | Author or owner deletes comment |
 | GET | `/activity/:id` | Owner/assignee reads activity history |
 
-Comment body: `{ "text": "I have started working on this task." }`. Comment length: 1-2000 characters. Activity tracks creation, edits, assignment, unassignment, individual status changes, comments, soft deletion and restoration.
+Comment body: `{ "text": "I have started working on this task." }`. Comment length: 1-2000 characters. Activity tracks creation, edits, assignment, unassignment, individual status changes, comments, attachments, soft deletion and restoration.
 
 ## Due date reminders
 
@@ -55,7 +66,6 @@ Normal lists and stats exclude trashed todos. Delete and clear operations set `d
 `page` (default 1), `limit` (1-100, default 10), `sortBy` (createdAt, updatedAt, deadline, title, status, priority), `order` (asc/desc), `status` (not-started/in-progress/done), `priority` (low/medium/high), `type` (task/todo), `category`, `search` (partial title), `overdue` (true/false). Dates use ISO 8601.
 
 Recurring todos are intentionally not included.
-
 
 ## Notifications and Socket.IO
 

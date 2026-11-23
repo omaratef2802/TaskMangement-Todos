@@ -27,6 +27,11 @@ const {
   updateTodoComment,
   deleteTodoComment,
 } = require("../controllers/todo");
+const {
+  uploadTodoAttachments,
+  deleteTodoAttachment,
+} = require("../controllers/todoAttachments");
+const uploadAttachments = require("../config/multerAttachments");
 
 const { auth, relasedTo } = require("../middlewares/auth");
 
@@ -47,6 +52,8 @@ router.get("/comments/:todoId", auth, getTodoComments);
 router.post("/comments/:todoId", auth, addTodoComment);
 router.patch("/comments/:todoId/:commentId", auth, updateTodoComment);
 router.delete("/comments/:todoId/:commentId", auth, deleteTodoComment);
+router.post("/:id/attachments", auth, uploadAttachments.array("attachments", 5), uploadTodoAttachments);
+router.delete("/:id/attachments/:attachmentId", auth, deleteTodoAttachment);
 router.get("/AllTodoByTitle", auth, getTodoByTitle);
 router.get("/AllTodoByStatus", auth, getTodoByStatus);
 router.get("/todo/:id", auth, getTodoById);
