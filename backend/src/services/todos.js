@@ -27,7 +27,7 @@ const allowedSortFields = [
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const getListOptions = (query = {}) => {
-  const stringFields = ["sortBy", "order", "status", "priority", "type", "category", "search", "overdue"];
+  const stringFields = ["sortBy", "order", "status", "priority", "type", "category", "search", "overdue", "reviewStatus"];
   for (const field of stringFields) {
     if (query[field] !== undefined && typeof query[field] !== "string") {
       throw new ApiError(400, `Invalid ${field} query parameter`);
@@ -69,6 +69,13 @@ const getListOptions = (query = {}) => {
       throw new ApiError(400, "Invalid todo status");
     }
     filter.status = query.status;
+  }
+
+  if (query.reviewStatus !== undefined) {
+    if (!["not-submitted", "pending", "changes-requested", "approved"].includes(query.reviewStatus)) {
+      throw new ApiError(400, "Invalid review status");
+    }
+    filter.reviewStatus = query.reviewStatus;
   }
 
   if (query.priority !== undefined) {
