@@ -236,7 +236,7 @@ const getAllTodosService = async (query = {}) => {
 
   const [todos, total] = await Promise.all([
     dbTodo.find(options.filter)
-      .populate("userId", "mail username")
+      .populate("userId", "fname lname mail username image")
       .populate("assignedTo", "fname lname username image")
       .populate("assignedStatuses.userId", "fname lname username image")
       .sort(options.sort)
