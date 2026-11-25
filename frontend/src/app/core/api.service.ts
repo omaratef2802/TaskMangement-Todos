@@ -27,6 +27,7 @@ export class ApiService{
  stats():Observable<ApiResponse<TodoStats>>{return this.http.get<ApiResponse<TodoStats>>(this.todos+'/stats');}
  list(query:ListQuery={}):Observable<ApiResponse<Todo[]>>{return this.http.get<ApiResponse<Todo[]>>(this.todos+'/AllTodos',{params:this.params(query)});}
  allUsersTodos(query:ListQuery={}):Observable<ApiResponse<Todo[]>>{return this.http.get<ApiResponse<Todo[]>>(this.todos+'/AllTodosUsers',{params:this.params(query)});}
+ reviewQueue(page=1,limit=20):Observable<ApiResponse<Todo[]>>{return this.allUsersTodos({page,limit,reviewStatus:'pending',sortBy:'createdAt',order:'asc'});}
  assignedToMe(query:ListQuery={}):Observable<ApiResponse<Todo[]>>{return this.http.get<ApiResponse<Todo[]>>(this.todos+'/assignedToMe',{params:this.params(query)});}
  assignedByMe(query:ListQuery={}):Observable<ApiResponse<Todo[]>>{return this.http.get<ApiResponse<Todo[]>>(this.todos+'/assignedByMe',{params:this.params(query)});}
  getTodo(id:string):Observable<ApiResponse<Todo>>{return this.http.get<ApiResponse<Todo>>(this.todos+'/todo/'+id);}
