@@ -12,6 +12,8 @@ const {
   getAssignedByMeService,
   getAssignableUsersService,
   updateAssignedTodoStatusService,
+  submitTodoForReviewService,
+  reviewTodoService,
   deleteTodoService,
   clearTodosService,
   updateTodoService,
@@ -205,6 +207,29 @@ const updateAssignedTodoStatus = async (req, res, next) => {
   }
 };
 
+const submitTodoForReview = async (req, res, next) => {
+  try {
+    const todo = await submitTodoForReviewService(req.params.id, req.id);
+    await notifyUsers([todo.userId?._id || todo.userId], {
+      actorId: req.id, todoId: todo._id, type: "todo_submitted_for_review",
+      title: "Task submitted for review", message: `"${todo.title}" is ready for your review.`,
+    });
+    res.status(200).json({ message: "Task submitted for review", data: todo });
+  } catch (err) { next(err); }
+};
+
+const reviewTodo = async (req, res, next) => {
+  try {
+    const todo = await reviewTodoService(req.params.id, req.id, req.body.decision, req.body.note);
+    await notifyTodoParticipants(todo._id, req.id, {
+      type: todo.reviewStatus === "approved" ? "todo_review_approved" : "todo_changes_requested",
+      title: todo.reviewStatus === "approved" ? "Task approved" : "Changes requested",
+      message: todo.reviewStatus === "approved" ? `"${todo.title}" was approved.` : `Changes were requested for "${todo.title}".`,
+    });
+    res.status(200).json({ message: "Task review saved", data: todo });
+  } catch (err) { next(err); }
+};
+
 const getDeletedTodos = async (req, res, next) => {
   try { const result = await getDeletedTodosService(req.id, req.query); res.status(200).json({ message: "success", data: result.todos, pagination: result.pagination }); }
   catch (err) { next(err); }
@@ -296,6 +321,8 @@ module.exports = {
   getAssignedByMe,
   getAssignableUsers,
   updateAssignedTodoStatus,
+  submitTodoForReview,
+  reviewTodo,
   deleteTodo,
   clearTodo,
   updateTodo,
