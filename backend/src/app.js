@@ -1,9 +1,25 @@
 const express = require("express");
+const cors = require("cors");
 const mongoose = require("mongoose");
 const passport = require("./config/passport");
 const ApiError = require("./utils/ApiError");
 
 const app = express();
+
+const allowedOrigins = (process.env.CLIENT_URL || "http://localhost:4200")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error("Origin is not allowed by CORS"));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+}));
 
 app.use(express.json());
 app.use((req, res, next) => {
