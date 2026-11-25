@@ -38,6 +38,8 @@ export class ApiService{
  unassignTodo(id:string,userId:string):Observable<ApiResponse<Todo>>{return this.http.patch<ApiResponse<Todo>>(this.todos+'/unassign/'+id,{userId});}
  assignableUsers(search='',page=1):Observable<ApiResponse<User[]>>{return this.http.get<ApiResponse<User[]>>(this.todos+'/assignableUsers',{params:this.params({search,page,limit:20})});}
  updateAssignedStatus(id:string,status:string):Observable<ApiResponse<Todo>>{return this.http.patch<ApiResponse<Todo>>(this.todos+'/assigned/'+id+'/status',{status});}
+ submitForReview(id:string):Observable<ApiResponse<Todo>>{return this.http.post<ApiResponse<Todo>>(this.todos+'/'+id+'/submit-review',{});}
+ reviewTodo(id:string,decision:'approved'|'changes-requested',note=''):Observable<ApiResponse<Todo>>{return this.http.patch<ApiResponse<Todo>>(this.todos+'/'+id+'/review',{decision,note});}
  moveToTrash(id:string):Observable<unknown>{return this.http.delete(this.todos+'/deleteTodo/'+id);}
  clearTodos():Observable<{message:string;deletedCount:number}>{return this.http.delete<{message:string;deletedCount:number}>(this.todos+'/clearTodo');}
  trash(query:ListQuery={}):Observable<ApiResponse<Todo[]>>{return this.http.get<ApiResponse<Todo[]>>(this.todos+'/trash',{params:this.params(query)});}
