@@ -185,12 +185,13 @@ const getTodoByStatusService = async (status, userId) => {
     .sort({ createdAt: -1 });
 };
 
-const getTodoByIdService = async (id, userId) => {
+const getTodoByIdService = async (id, userId, isAdmin = false) => {
   if (!mongoose.isValidObjectId(id)) {
     throw new ApiError(400, "Invalid todo ID");
   }
 
-  const todo = await dbTodo.findOne({ _id: id, userId, deletedAt: null })
+  const todo = await dbTodo.findOne({ _id: id, ...(isAdmin ? {} : { userId }), deletedAt: null })
+    .populate("userId", "fname lname username mail image")
     .populate("assignedTo", "fname lname username image")
       .populate("assignedStatuses.userId", "fname lname username image");
   if (!todo) throw new ApiError(404, "Todo not found");
@@ -608,7 +609,7 @@ const permanentlyDeleteTodoService = async (id, userId) => {
   return { message: "Todo permanently deleted" };
 };
 
-const updateTodoService = async (id, userId, data = {}) => {
+const updateTodoService = async (id, userId, data = {}, isAdmin = false) => {
   if (!mongoose.isValidObjectId(id)) {
     throw new ApiError(400, "Invalid todo ID");
   }
@@ -631,7 +632,7 @@ const updateTodoService = async (id, userId, data = {}) => {
     throw new ApiError(400, "Invalid todo deadline");
   }
 
-  const currentTodo = await dbTodo.findOne({ _id: id, userId, deletedAt: null });
+  const currentTodo = await dbTodo.findOne({ _id: id, ...(isAdmin ? {} : { userId }), deletedAt: null });
   if (!currentTodo) throw new ApiError(404, "Todo not found");
 
   if (updateData.status === "done") {
@@ -641,7 +642,7 @@ const updateTodoService = async (id, userId, data = {}) => {
   }
 
   const todo = await dbTodo.findOneAndUpdate(
-    { _id: id, userId, deletedAt: null },
+    { _id: id, ...(isAdmin ? {} : { userId }), deletedAt: null },
     { $set: updateData },
     { new: true, runValidators: true },
   );
@@ -650,7 +651,7 @@ const updateTodoService = async (id, userId, data = {}) => {
   if (updateData.deadline !== undefined) {
     await require("../modules/dbTodoReminder").deleteMany({ todoId: id });
   }
-  await logTodoActivity(id, userId, "updated", { fields: Object.keys(updateData) });
+  await logTodoActivity(id, userId, isAdmin ? "admin_updated" : "updated", { fields: Object.keys(updateData) });
   return todo;
 };
 
