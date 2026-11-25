@@ -116,3 +116,62 @@ body{background:var(--page);color:var(--ink)}.sidebar,.topbar,.surface,.task-mod
 @keyframes tf-float{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(0,-14px,0)}}
 .sidebar .nav-link{transition:background-color .18s ease,color .18s ease,transform .18s ease}
 .sidebar .nav-link:hover{transform:translateX(3px)}
+
+
+/* Task detail: richer hierarchy, feedback and motion */
+.detail-heading{
+  padding:28px 30px;min-height:132px;align-items:center;
+  background:linear-gradient(115deg,var(--surface) 0%,var(--surface-alt) 58%,var(--purple-soft) 100%);
+  border-color:color-mix(in srgb,var(--purple) 18%,var(--line));
+}
+.detail-heading h1{max-width:850px;font-size:clamp(24px,3vw,36px);line-height:1.12;overflow-wrap:anywhere}
+.detail-heading .eyebrow{letter-spacing:.16em}
+.detail-grid{animation:tf-rise .58s cubic-bezier(.2,.75,.25,1) both}
+.detail-main>.detail-card,.detail-side>.detail-card{
+  animation:tf-detail-in .55s cubic-bezier(.2,.75,.25,1) both;
+  transform-origin:50% 12%;
+}
+.detail-main>.detail-card:nth-child(2){animation-delay:.07s}
+.detail-main>.detail-card:nth-child(3){animation-delay:.13s}
+.detail-main>.detail-card:nth-child(4){animation-delay:.19s}
+.detail-side>.detail-card:nth-child(2){animation-delay:.1s}
+.detail-card{position:relative;overflow:hidden}
+.detail-card .surface-head{min-height:58px}
+.detail-card .surface-head h3{letter-spacing:-.025em}
+.detail-meta>div{padding:5px 0}
+.detail-meta b{font-weight:750}
+.review-card{border-color:color-mix(in srgb,var(--purple) 24%,var(--line))}
+.review-card .surface-head{align-items:center}
+.review-card .surface-head>div{display:grid;gap:5px}
+.review-card textarea{width:100%;margin-top:10px;resize:vertical}
+.review-actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:9px;margin-top:12px}
+.review-actions button{display:inline-flex;align-items:center;gap:7px}
+.approve-action{box-shadow:0 5px 16px #7054e82b}
+.approve-action:hover{transform:translateY(-2px);box-shadow:0 9px 22px #7054e83b}
+.review-note{margin-top:12px;padding:13px 15px;border-radius:11px;background:var(--surface-alt);border:1px solid var(--line)}
+.review-note.approved{background:color-mix(in srgb,#22a06b 9%,var(--surface));border-color:color-mix(in srgb,#22a06b 30%,var(--line))}
+.people-block,.assign-box{transition:background .2s ease}
+.person-row{border-radius:10px;transition:background .2s ease,transform .2s ease}
+.person-row:hover{background:var(--surface-alt);transform:translateX(2px)}
+.comment-row,.attachment-row,.activity-item{animation:tf-detail-in .35s ease both}
+.comment-compose textarea,.assign-box input,.assign-box select,.detail-form input,.detail-form textarea,.detail-form select{
+  transition:border-color .2s ease,box-shadow .2s ease,background .2s ease
+}
+.comment-compose textarea:focus,.assign-box input:focus,.detail-form input:focus,.detail-form textarea:focus,.detail-form select:focus{
+  outline:0;border-color:color-mix(in srgb,var(--purple) 65%,var(--line));box-shadow:0 0 0 3px color-mix(in srgb,var(--purple) 13%,transparent)
+}
+.attachment-drop{transition:border-color .2s ease,background .2s ease,transform .2s ease}
+.attachment-drop:hover{border-color:var(--purple);background:var(--surface-alt);transform:translateY(-1px)}
+.detail-actions{display:flex;align-items:center;gap:8px}
+.detail-actions .btn-secondary{display:inline-flex;align-items:center;gap:6px}
+@keyframes tf-detail-in{from{opacity:0;transform:translateY(14px) scale(.992)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(max-width:760px){
+  .detail-heading{padding:20px 17px;align-items:flex-start;gap:14px}
+  .detail-heading .heading-actions{flex-wrap:wrap}
+  .review-card .surface-head{align-items:flex-start;gap:10px}
+  .review-actions{justify-content:stretch}
+  .review-actions button{flex:1;justify-content:center}
+}
+@media(prefers-reduced-motion:reduce){
+  .detail-grid,.detail-main>.detail-card,.detail-side>.detail-card,.comment-row,.attachment-row,.activity-item{animation:none!important}
+}
