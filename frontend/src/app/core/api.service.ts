@@ -30,7 +30,7 @@ export class ApiService{
  assignedToMe(query:ListQuery={}):Observable<ApiResponse<Todo[]>>{return this.http.get<ApiResponse<Todo[]>>(this.todos+'/assignedToMe',{params:this.params(query)});}
  assignedByMe(query:ListQuery={}):Observable<ApiResponse<Todo[]>>{return this.http.get<ApiResponse<Todo[]>>(this.todos+'/assignedByMe',{params:this.params(query)});}
  getTodo(id:string):Observable<ApiResponse<Todo>>{return this.http.get<ApiResponse<Todo>>(this.todos+'/todo/'+id);}
- createTodo(payload:Partial<Todo>):Observable<ApiResponse<Todo>>{return this.http.post<ApiResponse<Todo>>(this.todos+'/addTodo',payload);}
+ createTodo(payload:Partial<Todo>&{inviteEmails?:string[]}):Observable<ApiResponse<Todo>&{invitations?:{email:string;status:string;message?:string}[]}>{return this.http.post<ApiResponse<Todo>&{invitations?:{email:string;status:string;message?:string}[]}>(this.todos+'/addTodo',payload);}
  updateTodo(id:string,payload:Partial<Todo>):Observable<ApiResponse<Todo>>{return this.http.patch<ApiResponse<Todo>>(this.todos+'/updateTodo/'+id,payload);}
  assignTodo(id:string,userIds:string[]):Observable<ApiResponse<Todo>>{return this.http.patch<ApiResponse<Todo>>(this.todos+'/assign/'+id,{userIds});}
  inviteTodo(id:string,email:string):Observable<{message:string;data:unknown;status:"assigned"|"invited"|"already-assigned"}>{return this.http.post<{message:string;data:unknown;status:"assigned"|"invited"|"already-assigned"}>(this.todos+'/invite/'+id,{email});}
