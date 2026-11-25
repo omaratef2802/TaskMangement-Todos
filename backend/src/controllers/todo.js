@@ -29,6 +29,15 @@ const createTodo = async (req, res, next) => {
     const inviteEmails = Array.isArray(req.body.inviteEmails) ? [...new Set(req.body.inviteEmails.map((email) => String(email).trim().toLowerCase()).filter(Boolean))] : [];
     if (inviteEmails.length > 20) throw new (require("../utils/ApiError"))(400, "You can invite a maximum of 20 people");
     const todo = await createTodos(req.body, req.id);
+    if (todo.assignedTo?.length) {
+      await notifyUsers(todo.assignedTo, {
+        actorId: req.id,
+        todoId: todo._id,
+        type: "todo_assigned",
+        title: "New task assigned",
+        message: `You were assigned to "${todo.title}".`,
+      });
+    }
     const invitationResults = [];
     if (inviteEmails.length) {
       const { inviteToTodoService } = require("../services/todoInvitations");
@@ -96,6 +105,22 @@ const getTodos = async (req, res, next) => {
 const getAllTodos = async (req, res, next) => {
   try {
     const result = await getAllTodosService(req.query);
+    res.status(200).json({
+      message: "success",
+      data: result.todos,
+      pagination: result.pagination,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const getReviewQueue = async (req, res, next) => {
+  try {
+    const query = { ...req.query, reviewStatus: "pending" };
+    const result = req.role === "Admin"
+      ? await getAllTodosService(query)
+      : await getTodosService(req.id, query);
     res.status(200).json({
       message: "success",
       data: result.todos,
@@ -314,6 +339,7 @@ module.exports = {
   getTodoById,
   getTodos,
   getAllTodos,
+  getReviewQueue,
   getTodoStats,
   assignTodo,
   unassignTodo,
