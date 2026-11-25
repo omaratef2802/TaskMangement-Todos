@@ -7,6 +7,7 @@ import {TaskDetailComponent} from './task-detail.component';
 import {CalendarComponent} from './calendar.component';
 import {NotificationsComponent,TrashComponent} from './personal-pages.component';
 import {ProfileComponent,AdminComponent} from './account-pages.component';
+import {ReviewQueueComponent} from './review-queue.component';
 export const routes:Routes=[
  {path:'login',component:AuthComponent,canActivate:[guestGuard]},
  {path:'register',component:AuthComponent,canActivate:[guestGuard],data:{mode:'register'}},
@@ -22,6 +23,7 @@ export const routes:Routes=[
   {path:'trash',component:TrashComponent},
   {path:'profile',component:ProfileComponent},
   {path:'admin',component:AdminComponent,canActivate:[adminGuard]},
+  {path:'reviews',component:ReviewQueueComponent,canActivate:[adminGuard]},
  ]},
  {path:'',pathMatch:'full',redirectTo:'app'},
  {path:'**',redirectTo:'app'}
