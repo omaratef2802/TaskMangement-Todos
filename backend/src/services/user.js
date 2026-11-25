@@ -9,6 +9,11 @@ const uploadImage = require("../utils/uploadImage");
 
 const createUser = async (info) => {
   const user = await dbUser.create(info);
+  try {
+    await require("./todoInvitations").acceptPendingTodoInvitations(user);
+  } catch (error) {
+    console.error("Pending task invitations could not be linked:", error.message);
+  }
   return user;
 };
 
