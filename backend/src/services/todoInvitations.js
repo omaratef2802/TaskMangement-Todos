@@ -89,4 +89,12 @@ const acceptPendingTodoInvitations = async (user) => {
   }
 };
 
-module.exports = { inviteToTodoService, acceptPendingTodoInvitations };
+const getTodoInvitationsService = async (todoId, ownerId) => {
+  const todo = await dbTodo.findOne({ _id: todoId, userId: ownerId, deletedAt: null }).select("_id");
+  if (!todo) throw new ApiError(404, "Todo not found");
+  return dbInvitation.find({ todoId, status: "pending" })
+    .select("_id email status createdAt")
+    .sort({ createdAt: -1 });
+};
+
+module.exports = { inviteToTodoService, acceptPendingTodoInvitations, getTodoInvitationsService };
