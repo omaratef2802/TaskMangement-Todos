@@ -540,6 +540,39 @@ const updateAssignedTodoStatusService = async (id, assigneeId, status) => {
   return todo;
 };
 
+const submitTodoForReviewService = async (id, assigneeId) => {
+  if (!mongoose.isValidObjectId(id)) throw new ApiError(400, "Invalid todo ID");
+  const current = await dbTodo.findOne({ _id: id, assignedTo: assigneeId, deletedAt: null });
+  if (!current) throw new ApiError(404, "Assigned todo not found");
+  const assignedStatus = current.assignedStatuses.find((entry) => String(entry.userId) === String(assigneeId));
+  if (!assignedStatus || assignedStatus.status !== "done") throw new ApiError(400, "Complete your assigned task before submitting it for review");
+  if (["pending", "approved"].includes(current.reviewStatus)) throw new ApiError(400, "This task is already submitted or approved");
+  const todo = await dbTodo.findOneAndUpdate(
+    { _id: id, assignedTo: assigneeId, deletedAt: null },
+    { $set: { reviewStatus: "pending", submittedAt: new Date(), reviewNote: "", reviewedAt: null, reviewedBy: null } },
+    { new: true, runValidators: true },
+  ).populate("userId", "fname lname username mail").populate("assignedTo", "fname lname username image");
+  if (!todo) throw new ApiError(404, "Assigned todo not found");
+  await logTodoActivity(id, assigneeId, "submitted_for_review");
+  return todo;
+};
+
+const reviewTodoService = async (id, adminId, decision, note = "") => {
+  if (!mongoose.isValidObjectId(id)) throw new ApiError(400, "Invalid todo ID");
+  if (!["approved", "changes-requested"].includes(decision)) throw new ApiError(400, "Invalid review decision");
+  if (typeof note !== "string" || note.length > 2000) throw new ApiError(400, "Review note must be 2000 characters or less");
+  if (decision === "changes-requested" && !note.trim()) throw new ApiError(400, "Please provide a reason for the requested changes");
+  const todo = await dbTodo.findOneAndUpdate(
+    { _id: id, deletedAt: null, reviewStatus: "pending" },
+    { $set: { reviewStatus: decision, reviewNote: note.trim(), reviewedAt: new Date(), reviewedBy: adminId } },
+    { new: true, runValidators: true },
+  ).populate("userId", "fname lname username mail").populate("assignedTo", "fname lname username image")
+    .populate("reviewedBy", "fname lname username image");
+  if (!todo) throw new ApiError(404, "Task is not waiting for review");
+  await logTodoActivity(id, adminId, decision === "approved" ? "review_approved" : "changes_requested", { note: note.trim() });
+  return todo;
+};
+
 const deleteTodoService = async (id, userId) => {
   if (!mongoose.isValidObjectId(id)) throw new ApiError(400, "Invalid todo ID");
   const todo = await dbTodo.findOneAndUpdate(
@@ -669,6 +702,8 @@ module.exports = {
   getAssignedByMeService,
   getAssignableUsersService,
   updateAssignedTodoStatusService,
+  submitTodoForReviewService,
+  reviewTodoService,
   deleteTodoService,
   clearTodosService,
   getDeletedTodosService,
