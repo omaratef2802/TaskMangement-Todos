@@ -34,6 +34,11 @@ const Login = async (mail, password) => {
 
 const googleLoginServices = async (user) => {
   if (!user) throw new ApiError(401, "Google authentication failed");
+  try {
+    await require("./todoInvitations").acceptPendingTodoInvitations(user);
+  } catch (error) {
+    console.error("Pending task invitations could not be linked:", error.message);
+  }
 
   const token = genToken(process.env.SECRET, "1w", {
     userId: user._id,
