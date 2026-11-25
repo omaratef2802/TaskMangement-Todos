@@ -29,3 +29,9 @@ body{background:var(--page);color:var(--ink)}.sidebar,.topbar,.surface,.task-mod
 .review-actions{display:flex;gap:10px;flex-wrap:wrap}
 .review-queue-row .task-copy small{display:flex;gap:12px;flex-wrap:wrap}
 .review-queue-row .btn-primary{white-space:nowrap}
+
+
+.status-pill.pending{background:#fff7ed;color:#c2410c}
+.status-pill.approved{background:#ecfdf5;color:#047857}
+.status-pill.changes-requested{background:#fef2f2;color:#b91c1c}
+.status-pill.not-submitted{background:#f1f5f9;color:#475569}
