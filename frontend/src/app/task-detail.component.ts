@@ -3,7 +3,7 @@ import {Component,OnInit,inject,signal} from '@angular/core';
 import {FormBuilder,ReactiveFormsModule,Validators} from '@angular/forms';
 import {ActivatedRoute,Router,RouterLink} from '@angular/router';
 import {ApiService} from './core/api.service';
-import {Attachment,Todo,TodoActivity,TodoComment,User} from './core/models';
+import {Attachment,Todo,TodoActivity,TodoComment,TodoPriority,TodoStatus,User} from './core/models';
 @Component({standalone:true,selector:'app-task-detail',imports:[CommonModule,DatePipe,ReactiveFormsModule,RouterLink],template:`
 <div class="detail-back"><a routerLink="/app/tasks"><i class="bi bi-arrow-left"></i> Back to tasks</a></div>
 @if(error()){<div class="alert-error">{{error()}} <button class="text-button" (click)="load()">Retry</button></div>}
