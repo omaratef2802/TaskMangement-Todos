@@ -1,4 +1,4 @@
-const { inviteToTodoService } = require("../services/todoInvitations");
+const { inviteToTodoService, getTodoInvitationsService } = require("../services/todoInvitations");
 
 const inviteToTodo = async (req, res, next) => {
   try {
@@ -13,4 +13,13 @@ const inviteToTodo = async (req, res, next) => {
   }
 };
 
-module.exports = { inviteToTodo };
+const getTodoInvitations = async (req, res, next) => {
+  try {
+    const invitations = await getTodoInvitationsService(req.params.id, req.id);
+    res.status(200).json({ message: "success", data: invitations });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { inviteToTodo, getTodoInvitations };
