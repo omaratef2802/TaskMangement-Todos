@@ -3,7 +3,7 @@ import {Component,OnInit,inject,signal} from '@angular/core';
 import {FormBuilder,ReactiveFormsModule,Validators} from '@angular/forms';
 import {ActivatedRoute,RouterLink} from '@angular/router';
 import {ApiService} from './core/api.service';
-import {ListQuery,Todo,TodoPriority,TodoStats,TodoStatus} from './core/models';
+import {ListQuery,Todo,TodoPriority,TodoStats,TodoStatus,User} from './core/models';
 @Component({standalone:true,selector:'app-dashboard',imports:[CommonModule,DatePipe,RouterLink],template:`
 <div class="page-heading"><div><span class="eyebrow">{{greeting()}}</span><h1>Overview</h1><p class="muted">Here’s what’s happening with your work today.</p></div><a class="btn-primary" routerLink="/app/tasks"><i class="bi bi-plus-lg"></i> Manage tasks</a></div>
 @if(error()){<div class="alert-error">{{error()}}</div>}
