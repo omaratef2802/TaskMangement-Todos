@@ -27,6 +27,7 @@ const {
   updateTodoComment,
   deleteTodoComment,
 } = require("../controllers/todo");
+const { inviteToTodo } = require("../controllers/todoInvitations");
 const {
   uploadTodoAttachments,
   deleteTodoAttachment,
@@ -40,6 +41,7 @@ router.get("/stats", auth, getTodoStats);
 router.get("/assignedToMe", auth, getAssignedToMe);
 router.get("/assignedByMe", auth, getAssignedByMe);
 router.get("/assignableUsers", auth, getAssignableUsers);
+router.post("/invite/:id", auth, inviteToTodo);
 router.patch("/assign/:id", auth, assignTodo);
 router.patch("/unassign/:id", auth, unassignTodo);
 router.patch("/assigned/:id/status", auth, updateAssignedTodoStatus);
