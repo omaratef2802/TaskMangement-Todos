@@ -20,3 +20,12 @@ body{background:var(--page);color:var(--ink)}.sidebar,.topbar,.surface,.task-mod
 .invite-chip-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .invite-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font-size:12px}
 .invite-chip button{display:inline-flex;align-items:center;justify-content:center;border:0;background:transparent;color:var(--muted);padding:0}
+
+
+.review-card .review-note{margin:12px 0;padding:12px 14px;border:1px solid var(--border-color,#e5e7eb);border-radius:12px;background:var(--surface-muted,#f8fafc)}
+.review-card .review-note p{margin:6px 0 0;color:var(--text-secondary,#64748b)}
+.review-card .review-note.approved{border-color:#b7e4c7}
+.review-card textarea{width:100%;margin:8px 0 12px;padding:10px 12px;border:1px solid var(--border-color,#e5e7eb);border-radius:10px;background:var(--surface,#fff);color:inherit;resize:vertical}
+.review-actions{display:flex;gap:10px;flex-wrap:wrap}
+.review-queue-row .task-copy small{display:flex;gap:12px;flex-wrap:wrap}
+.review-queue-row .btn-primary{white-space:nowrap}
