@@ -105,3 +105,14 @@ body{background:var(--page);color:var(--ink)}.sidebar,.topbar,.surface,.task-mod
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
+
+
+.auth-art{position:relative;overflow:hidden}
+.auth-art::before,.auth-art::after{content:"";position:absolute;border:1px solid #ffffff25;border-radius:50%;pointer-events:none}
+.auth-art::before{width:360px;height:360px;right:-150px;top:12%;box-shadow:0 0 0 34px #ffffff08,0 0 0 72px #ffffff06;animation:tf-float 9s ease-in-out infinite}
+.auth-art::after{width:190px;height:190px;left:-95px;bottom:12%;background:#ffffff0a;animation:tf-float 7s ease-in-out infinite reverse}
+.auth-art>*{position:relative;z-index:1}
+.auth-card{animation:tf-rise .65s cubic-bezier(.2,.75,.25,1) both}
+@keyframes tf-float{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(0,-14px,0)}}
+.sidebar .nav-link{transition:background-color .18s ease,color .18s ease,transform .18s ease}
+.sidebar .nav-link:hover{transform:translateX(3px)}
