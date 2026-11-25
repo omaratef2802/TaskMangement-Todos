@@ -220,7 +220,7 @@ const submitTodoForReview = async (req, res, next) => {
 
 const reviewTodo = async (req, res, next) => {
   try {
-    const todo = await reviewTodoService(req.params.id, req.id, req.body.decision, req.body.note);
+    const todo = await reviewTodoService(req.params.id, req.id, req.body.decision, req.body.note, req.role === "Admin");
     await notifyTodoParticipants(todo._id, req.id, {
       type: todo.reviewStatus === "approved" ? "todo_review_approved" : "todo_changes_requested",
       title: todo.reviewStatus === "approved" ? "Task approved" : "Changes requested",
