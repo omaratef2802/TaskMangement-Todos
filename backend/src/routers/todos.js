@@ -15,6 +15,8 @@ const {
   getAssignedByMe,
   getAssignableUsers,
   updateAssignedTodoStatus,
+  submitTodoForReview,
+  reviewTodo,
   deleteTodo,
   clearTodo,
   updateTodo,
@@ -46,6 +48,8 @@ router.post("/invite/:id", auth, inviteToTodo);
 router.patch("/assign/:id", auth, assignTodo);
 router.patch("/unassign/:id", auth, unassignTodo);
 router.patch("/assigned/:id/status", auth, updateAssignedTodoStatus);
+router.post("/:id/submit-review", auth, submitTodoForReview);
+router.patch("/:id/review", auth, relasedTo("Admin"), reviewTodo);
 router.get("/AllTodos", auth, getTodos);
 router.get("/trash", auth, getDeletedTodos);
 router.patch("/restore/:id", auth, restoreTodo);
