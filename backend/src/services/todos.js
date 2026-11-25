@@ -564,19 +564,19 @@ const submitTodoForReviewService = async (id, assigneeId) => {
   return todo;
 };
 
-const reviewTodoService = async (id, adminId, decision, note = "") => {
+const reviewTodoService = async (id, reviewerId, decision, note = "", isAdmin = false) => {
   if (!mongoose.isValidObjectId(id)) throw new ApiError(400, "Invalid todo ID");
   if (!["approved", "changes-requested"].includes(decision)) throw new ApiError(400, "Invalid review decision");
   if (typeof note !== "string" || note.length > 2000) throw new ApiError(400, "Review note must be 2000 characters or less");
   if (decision === "changes-requested" && !note.trim()) throw new ApiError(400, "Please provide a reason for the requested changes");
   const todo = await dbTodo.findOneAndUpdate(
-    { _id: id, deletedAt: null, reviewStatus: "pending" },
-    { $set: { reviewStatus: decision, reviewNote: note.trim(), reviewedAt: new Date(), reviewedBy: adminId } },
+    { _id: id, ...(isAdmin ? {} : { userId: reviewerId }), deletedAt: null, reviewStatus: "pending" },
+    { $set: { reviewStatus: decision, reviewNote: note.trim(), reviewedAt: new Date(), reviewedBy: reviewerId } },
     { new: true, runValidators: true },
   ).populate("userId", "fname lname username mail").populate("assignedTo", "fname lname username image")
     .populate("reviewedBy", "fname lname username image");
   if (!todo) throw new ApiError(404, "Task is not waiting for review");
-  await logTodoActivity(id, adminId, decision === "approved" ? "review_approved" : "changes_requested", { note: note.trim() });
+  await logTodoActivity(id, reviewerId, decision === "approved" ? "review_approved" : "changes_requested", { note: note.trim() });
   return todo;
 };
 
