@@ -51,7 +51,7 @@ const inviteToTodoService = async (todoId, ownerId, email) => {
   await sendEmail(
     normalizedEmail,
     `Invitation to collaborate: ${todo.title}`,
-    `<h2>You have been invited to a task</h2><p>You were invited to collaborate on <strong>${escapeHtml(todo.title)}</strong>.</p><p><a href="${appUrl}/auth">Create an account or sign in</a> using this email address (${escapeHtml(normalizedEmail)}). The task will appear automatically after registration.</p>`,
+    `<h2>You have been invited to a task</h2><p>You were invited to collaborate on <strong>${escapeHtml(todo.title)}</strong>.</p><p><a href="${appUrl}/register">Create an account or sign in</a> using this email address (${escapeHtml(normalizedEmail)}). The task will appear automatically after registration.</p>`,
   );
 
   return { status: "invited", invitation };
@@ -63,17 +63,20 @@ const acceptPendingTodoInvitations = async (user) => {
 
   const acceptedIds = [];
   for (const invitation of invitations) {
-    const todo = await dbTodo.findOneAndUpdate(
+    const currentTodo = await dbTodo.findOne({ _id: invitation.todoId, deletedAt: null }).select("assignedTo assignedStatuses");
+    if (!currentTodo) continue;
+    const alreadyAssigned = currentTodo.assignedTo.some((id) => String(id) === String(user._id));
+    await dbTodo.updateOne(
       { _id: invitation.todoId, deletedAt: null },
-      {
-        $addToSet: {
-          assignedTo: user._id,
-          assignedStatuses: { userId: user._id, status: "not-started", completedAt: null },
-        },
-      },
-      { new: true },
+      { $addToSet: { assignedTo: user._id } },
     );
-    if (todo) acceptedIds.push(invitation._id);
+    if (!alreadyAssigned) {
+      await dbTodo.updateOne(
+        { _id: invitation.todoId, deletedAt: null },
+        { $push: { assignedStatuses: { userId: user._id, status: "not-started", completedAt: null } } },
+      );
+    }
+    acceptedIds.push(invitation._id);
   }
 
   if (acceptedIds.length) {
