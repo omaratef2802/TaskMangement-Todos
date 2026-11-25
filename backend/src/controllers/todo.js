@@ -25,7 +25,21 @@ const { notifyUsers, notifyTodoParticipants } = require("../services/notificatio
 const createTodo = async (req, res, next) => {
   try {
     const todo = await createTodos(req.body, req.id);
-    res.status(201).json({ message: "success", data: todo });
+    const inviteEmails = Array.isArray(req.body.inviteEmails) ? [...new Set(req.body.inviteEmails.map((email) => String(email).trim().toLowerCase()).filter(Boolean))] : [];
+    if (inviteEmails.length > 20) throw new (require("../utils/ApiError"))(400, "You can invite a maximum of 20 people");
+    const invitationResults = [];
+    if (inviteEmails.length) {
+      const { inviteToTodoService } = require("../services/todoInvitations");
+      for (const email of inviteEmails) {
+        try {
+          const result = await inviteToTodoService(String(todo._id), req.id, email);
+          invitationResults.push({ email, status: result.status });
+        } catch (error) {
+          invitationResults.push({ email, status: "failed", message: error.message });
+        }
+      }
+    }
+    res.status(201).json({ message: "success", data: todo, invitations: invitationResults });
   } catch (err) {
     next(err);
   }
@@ -57,7 +71,7 @@ const getTodoById = async (req, res, next) => {
   try {
     res.status(200).json({
       message: "success",
-      data: await getTodoByIdService(req.params.id, req.id),
+      data: await getTodoByIdService(req.params.id, req.id, req.role === "Admin"),
     });
   } catch (err) {
     next(err);
@@ -257,7 +271,7 @@ const clearTodo = async (req, res, next) => {
 
 const updateTodo = async (req, res, next) => {
   try {
-    const todo = await updateTodoService(req.params.id, req.id, req.body);
+    const todo = await updateTodoService(req.params.id, req.id, req.body, req.role === "Admin");
     await notifyUsers(todo.assignedTo, {
       actorId: req.id, todoId: todo._id, type: "todo_updated",
       title: "Assigned task updated", message: `"${todo.title}" was updated by its owner.`,
