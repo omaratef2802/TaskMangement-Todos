@@ -6,7 +6,8 @@ export interface ApiResponse<T>{message?:string;data:T;pagination?:Pagination;un
 export interface User{_id:string;fname:string;lname:string;username:string;mail:string;image?:string;role?:'user'|'Admin';authProvider?:'local'|'google';createdAt?:string}
 export interface AssignedStatus{userId:User|string;status:TodoStatus;completedAt?:string|null}
 export interface Attachment{_id:string;publicId:string;url:string;name:string;format:string;mimeType:string;resourceType:'image'|'raw'|'video';size:number;uploadedBy:User|string;uploadedAt:string}
-export interface Todo{_id:string;type:TodoType;title:string;description:string;status:TodoStatus;priority:TodoPriority;category:string;deadline?:string|null;completedAt?:string|null;createdAt:string;updatedAt:string;userId:User|string;assignedTo:User[];assignedStatuses:AssignedStatus[];attachments:Attachment[]}
+export type ReviewStatus='not-submitted'|'pending'|'changes-requested'|'approved';
+export interface Todo{_id:string;type:TodoType;title:string;description:string;status:TodoStatus;priority:TodoPriority;category:string;deadline?:string|null;completedAt?:string|null;createdAt:string;updatedAt:string;userId:User|string;assignedTo:User[];assignedStatuses:AssignedStatus[];attachments:Attachment[];reviewStatus:ReviewStatus;reviewNote:string;submittedAt?:string|null;reviewedAt?:string|null;reviewedBy?:User|string|null}
 export interface TodoStats{total:number;notStarted:number;inProgress:number;completed:number;overdue:number;priorities:{low:number;medium:number;high:number};assignments:{assignedToMe:number;assignedByMe:number;unassigned:number}}
 export interface TodoComment{_id:string;todoId:string;userId:User;text:string;createdAt:string;updatedAt:string}
 export interface TodoActivity{_id:string;todoId:string;actorId:User;action:string;details:Record<string,unknown>;createdAt:string}
