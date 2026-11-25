@@ -24,9 +24,9 @@ const { notifyUsers, notifyTodoParticipants } = require("../services/notificatio
 
 const createTodo = async (req, res, next) => {
   try {
-    const todo = await createTodos(req.body, req.id);
     const inviteEmails = Array.isArray(req.body.inviteEmails) ? [...new Set(req.body.inviteEmails.map((email) => String(email).trim().toLowerCase()).filter(Boolean))] : [];
     if (inviteEmails.length > 20) throw new (require("../utils/ApiError"))(400, "You can invite a maximum of 20 people");
+    const todo = await createTodos(req.body, req.id);
     const invitationResults = [];
     if (inviteEmails.length) {
       const { inviteToTodoService } = require("../services/todoInvitations");
