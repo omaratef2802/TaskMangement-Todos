@@ -1,0 +1,54 @@
+<div class="page-heading">
+  <div>
+    <span class="eyebrow">ADMINISTRATION</span>
+    <h1>Review queue</h1>
+    <p class="muted">Tasks submitted by teammates and waiting for your decision.</p>
+  </div>
+  <button class="btn-secondary small" type="button" (click)="load()">
+    <i class="bi bi-arrow-clockwise"></i> Refresh
+  </button>
+</div>
+
+@if (error()) {
+  <div class="alert-error">{{ error() }}</div>
+}
+
+<section class="surface">
+  <div class="surface-head">
+    <div>
+      <h3>Pending reviews</h3>
+      <p class="muted">{{ tasks().length }} task(s) waiting for approval</p>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="empty-state">Loading review queue…</div>
+  } @else if (!tasks().length) {
+    <div class="empty-state">
+      <i class="bi bi-check2-circle"></i>
+      <h3>All caught up</h3>
+      <p>There are no tasks waiting for review.</p>
+    </div>
+  } @else {
+    @for (task of tasks(); track task._id) {
+      <article class="task-row review-queue-row">
+        <span class="status-mark done">
+          <i class="bi bi-hourglass-split"></i>
+        </span>
+
+        <a class="task-copy task-anchor" [routerLink]="['/app/tasks', task._id]">
+          <b>{{ task.title }}</b>
+          <p>{{ task.description || 'No description added' }}</p>
+          <small>
+            <span>Owner: {{ ownerName(task) }}</span>
+            <span>{{ task.assignedTo?.length || 0 }} assignee(s)</span>
+            <span>Submitted {{ task.submittedAt ? (task.submittedAt | date:'mediumDate') : 'recently' }}</span>
+          </small>
+        </a>
+
+        <span class="status-pill pending">Pending review</span>
+        <a class="btn-primary small" [routerLink]="['/app/tasks', task._id]">Review task</a>
+      </article>
+    }
+  }
+</section>
