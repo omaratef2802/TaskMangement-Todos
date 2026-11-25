@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const dbTodo = require("../modules/dbTodos");
 const dbUser = require("../modules/dbUser");
 const ApiError = require("../utils/ApiError");
+const sendEmail = require("../utils/sendEmail");
 const { logTodoActivity } = require("./todoActivity");
 
 const editableFields = [
@@ -322,7 +323,7 @@ const assignTodoService = async (id, ownerId, userIds) => {
   const todo = await dbTodo.findOne({ _id: id, userId: ownerId, deletedAt: null });
   if (!todo) throw new ApiError(404, "Todo not found");
 
-  const users = await dbUser.find({ _id: { $in: normalizedIds } }).select("_id");
+  const users = await dbUser.find({ _id: { $in: normalizedIds } }).select("_id fname lname mail");
   if (users.length !== normalizedIds.length) {
     throw new ApiError(404, "One or more users were not found");
   }
@@ -371,7 +372,15 @@ const assignTodoService = async (id, ownerId, userIds) => {
   if (statusIds.length) {
     await dbTodo.updateOne({ _id: id, userId: ownerId, deletedAt: null }, { $addToSet: { assignedStatuses: { $each: statusIds } } });
   }
-  await logTodoActivity(id, ownerId, "assigned", { userIds: normalizedIds });
+  const newlyAssignedUsers = users.filter((user) => newIds.includes(String(user._id)));
+  const owner = await dbUser.findById(ownerId).select("fname lname");
+  const appUrl = (process.env.CLIENT_URL || "http://localhost:4200").split(",")[0].trim();
+  await Promise.allSettled(newlyAssignedUsers.map((user) => sendEmail(
+    user.mail,
+    "New task assigned: " + todo.title,
+    "<h2>You have a new task</h2><p>Hello " + user.fname + ",</p><p>" + (owner ? owner.fname + " " + owner.lname : "A teammate") + " assigned you to <strong>" + todo.title + "</strong>.</p><p><a href=\"" + appUrl + "/app/tasks/" + id + "\">Open task</a></p>",
+  ).catch((error) => console.error("Assignment email failed:", error.message))));
+  await logTodoActivity(id, ownerId, "assigned", { userIds: newIds });
   return await dbTodo.findById(id)
     .populate("assignedTo", "fname lname username image")
       .populate("assignedStatuses.userId", "fname lname username image");
