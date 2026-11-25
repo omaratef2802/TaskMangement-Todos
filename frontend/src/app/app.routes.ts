@@ -23,7 +23,7 @@ export const routes:Routes=[
   {path:'trash',component:TrashComponent},
   {path:'profile',component:ProfileComponent},
   {path:'admin',component:AdminComponent,canActivate:[adminGuard]},
-  {path:'reviews',component:ReviewQueueComponent,canActivate:[adminGuard]},
+  {path:'reviews',component:ReviewQueueComponent},
  ]},
  {path:'',pathMatch:'full',redirectTo:'app'},
  {path:'**',redirectTo:'app'}
