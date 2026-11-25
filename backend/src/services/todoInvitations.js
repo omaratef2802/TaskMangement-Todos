@@ -21,6 +21,8 @@ const inviteToTodoService = async (todoId, ownerId, email) => {
 
   const existingUser = await dbUser.findOne({ mail: normalizedEmail }).select("_id fname lname mail");
   if (existingUser) {
+    const alreadyAssigned = todo.assignedTo.some((id) => String(id) === String(existingUser._id));
+    if (alreadyAssigned) return { status: "already-assigned", data: todo };
     const updatedTodo = await assignTodoService(todoId, ownerId, [String(existingUser._id)]);
     await notifyUsers([existingUser._id], {
       actorId: ownerId,
@@ -29,15 +31,6 @@ const inviteToTodoService = async (todoId, ownerId, email) => {
       title: "New task assigned",
       message: `You were assigned to "${todo.title}".`,
     });
-    try {
-      await sendEmail(
-        normalizedEmail,
-        `New task assigned: ${todo.title}`,
-        `<h2>You have a new task</h2><p>Hello ${escapeHtml(existingUser.fname)},</p><p>You were assigned to <strong>${escapeHtml(todo.title)}</strong>.</p><p>Sign in to your account to view the task.</p>`,
-      );
-    } catch (error) {
-      console.error("Assignment email failed:", error.message);
-    }
     return { status: "assigned", data: updatedTodo };
   }
 
