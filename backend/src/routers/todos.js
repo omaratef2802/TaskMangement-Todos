@@ -49,7 +49,7 @@ router.patch("/assign/:id", auth, assignTodo);
 router.patch("/unassign/:id", auth, unassignTodo);
 router.patch("/assigned/:id/status", auth, updateAssignedTodoStatus);
 router.post("/:id/submit-review", auth, submitTodoForReview);
-router.patch("/:id/review", auth, relasedTo("Admin"), reviewTodo);
+router.patch("/:id/review", auth, reviewTodo);
 router.get("/AllTodos", auth, getTodos);
 router.get("/trash", auth, getDeletedTodos);
 router.patch("/restore/:id", auth, restoreTodo);
