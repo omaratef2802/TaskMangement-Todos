@@ -155,6 +155,33 @@ const createTodos = async (todo = {}, userId) => {
     throw new ApiError(400, "Invalid todo deadline");
   }
 
+  if (todo.assignedUserIds !== undefined && !Array.isArray(todo.assignedUserIds)) {
+    throw new ApiError(400, "assignedUserIds must be an array");
+  }
+
+  const assignedUserIds = [...new Set((todo.assignedUserIds || []).map((id) => String(id)))];
+  if (assignedUserIds.length > 20) {
+    throw new ApiError(400, "You can assign a todo to a maximum of 20 users");
+  }
+  if (assignedUserIds.some((id) => !mongoose.isValidObjectId(id))) {
+    throw new ApiError(400, "One or more assigned user IDs are invalid");
+  }
+  if (assignedUserIds.includes(String(userId))) {
+    throw new ApiError(400, "You cannot assign a todo to yourself");
+  }
+  if (assignedUserIds.length) {
+    const users = await dbUser.find({ _id: { $in: assignedUserIds } }).select("_id");
+    if (users.length !== assignedUserIds.length) {
+      throw new ApiError(404, "One or more users were not found");
+    }
+    todoData.assignedTo = assignedUserIds;
+    todoData.assignedStatuses = assignedUserIds.map((assignedId) => ({
+      userId: assignedId,
+      status: "not-started",
+      completedAt: null,
+    }));
+  }
+
   if (todoData.status === "done") {
     todoData.completedAt = new Date();
   }
@@ -197,7 +224,8 @@ const getTodoByIdService = async (id, userId, isAdmin = false) => {
     throw new ApiError(400, "Invalid todo ID");
   }
 
-  const todo = await dbTodo.findOne({ _id: id, ...(isAdmin ? {} : { userId }), deletedAt: null })
+  const accessFilter = isAdmin ? {} : { $or: [{ userId }, { assignedTo: userId }] };
+  const todo = await dbTodo.findOne({ _id: id, ...accessFilter, deletedAt: null })
     .populate("userId", "fname lname username mail image")
     .populate("assignedTo", "fname lname username image")
       .populate("assignedStatuses.userId", "fname lname username image");
@@ -553,6 +581,14 @@ const submitTodoForReviewService = async (id, assigneeId) => {
   if (!current) throw new ApiError(404, "Assigned todo not found");
   const assignedStatus = current.assignedStatuses.find((entry) => String(entry.userId) === String(assigneeId));
   if (!assignedStatus || assignedStatus.status !== "done") throw new ApiError(400, "Complete your assigned task before submitting it for review");
+  const allAssigneesCompleted = current.assignedTo.every((assignedId) =>
+    current.assignedStatuses.some((entry) =>
+      String(entry.userId) === String(assignedId) && entry.status === "done",
+    ),
+  );
+  if (!allAssigneesCompleted) {
+    throw new ApiError(400, "All assigned teammates must complete their work before the task can be submitted for review");
+  }
   if (["pending", "approved"].includes(current.reviewStatus)) throw new ApiError(400, "This task is already submitted or approved");
   const todo = await dbTodo.findOneAndUpdate(
     { _id: id, assignedTo: assigneeId, deletedAt: null },
