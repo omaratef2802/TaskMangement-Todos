@@ -23,6 +23,8 @@ export class ApiService{
  updatePassword(currentPassword:string,newPassword:string,confirmPassword:string):Observable<ApiResponse<User>>{return this.http.patch<ApiResponse<User>>(this.users+'/updatePassword',{Password:currentPassword,newPassword,confirmPassword});}
  uploadProfileImage(file:File):Observable<ApiResponse<User>>{const body=new FormData();body.append('image',file);return this.http.patch<ApiResponse<User>>(this.users+'/uploadImage',body);}
  usersList(page=1,limit=20):Observable<ApiResponse<User[]>>{return this.http.get<ApiResponse<User[]>>(this.users+'/MyUsers',{params:this.params({page,limit})});}
+ adminsList():Observable<ApiResponse<User[]>>{return this.http.get<ApiResponse<User[]>>(environment.apiUrl+'/admin/admins');}
+ createAdmin(payload:{fname:string;lname:string;username:string;mail:string;password:string}):Observable<ApiResponse<User>>{return this.http.post<ApiResponse<User>>(environment.apiUrl+'/admin/create-admin',payload);}
  deleteUser(id:string):Observable<unknown>{return this.http.delete(this.users+'/deleteUsers/'+id);}
  stats():Observable<ApiResponse<TodoStats>>{return this.http.get<ApiResponse<TodoStats>>(this.todos+'/stats');}
  list(query:ListQuery={}):Observable<ApiResponse<Todo[]>>{return this.http.get<ApiResponse<Todo[]>>(this.todos+'/AllTodos',{params:this.params(query)});}
