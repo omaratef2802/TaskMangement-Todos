@@ -2,7 +2,7 @@
 
 TaskFlow is a collaborative task-management application with an Angular frontend and an Express/MongoDB backend. Users can organize personal work, assign teammates, track individual progress, discuss tasks, attach files, review completed work, and receive notifications.
 
-The backend and frontend are now integrated in the `main` branch. The previous working branches are retained as development history.
+The backend and frontend are integrated in the `main` branch. The previous working branches are retained as development history.
 
 ## Project components
 
@@ -16,9 +16,9 @@ The backend and frontend are now integrated in the `main` branch. The previous w
 - Authentication, registration, password recovery, and role-based admin access.
 - Task creation, editing, filtering, categories, priorities, deadlines, and soft deletion.
 - Task assignment, invitations, and independent progress tracking for each assignee.
-- Comments, activity history, and file attachments stored through Cloudinary.
+- Comments, activity history, and Cloudinary file attachments.
 - Review and approval workflow for submitted work.
-- Notifications with Socket.IO events and a persistent notification center.
+- Persistent notifications and real-time updates with Socket.IO.
 - Calendar and dashboard views that include assigned tasks.
 - Admin tools for managing users and reviewing tasks.
 - Light, dark, and system theme options.
@@ -33,17 +33,21 @@ The backend and frontend are now integrated in the `main` branch. The previous w
 
 ## Run locally
 
-### 1. Start the backend
+Clone the repository:
 
 ```bash
 git clone https://github.com/omaratef2802/TaskMangement-Todos.git
 cd TaskMangement-Todos
-git checkout Backend-omaratef
+```
+
+### 1. Start the backend
+
+```bash
 cd backend
 npm install
 ```
 
-Create `backend/.env` using the variables documented in [Backend setup](https://github.com/omaratef2802/TaskMangement-Todos/blob/Backend-omaratef/backend/README.md), then run:
+Create `backend/.env` using the variables documented in [Backend setup](backend/README.md), then run:
 
 ```bash
 npm start
@@ -53,7 +57,7 @@ The API defaults to `http://localhost:3000/api`.
 
 ### 2. Start the frontend
 
-In a second terminal, from the same repository clone:
+In a second terminal, from the repository root:
 
 ```bash
 cd frontend
@@ -65,8 +69,8 @@ Open [http://localhost:4200](http://localhost:4200). The development environment
 
 ## Documentation
 
-- [Backend setup and configuration](https://github.com/omaratef2802/TaskMangement-Todos/blob/Backend-omaratef/backend/README.md)
-- [Backend API reference](https://github.com/omaratef2802/TaskMangement-Todos/blob/Backend-omaratef/backend/TODO_API.md)
+- [Backend setup and configuration](backend/README.md)
+- [Backend API reference](backend/TODO_API.md)
 - [Frontend setup and implemented screens](frontend/README.md)
 
 ## Repository status
