@@ -2,14 +2,14 @@
 
 TaskFlow is a collaborative task-management application with an Angular frontend and an Express/MongoDB backend. Users can organize personal work, assign teammates, track individual progress, discuss tasks, attach files, review completed work, and receive notifications.
 
-> **Repository layout:** the backend and frontend are maintained on separate working branches at the moment. The root `main` branch is the project landing page and documentation entry point; it does not yet contain the integrated application source.
+The backend and frontend are now integrated in the `main` branch. The previous working branches are retained as development history.
 
 ## Project components
 
-| Component | Technology | Working branch |
+| Component | Technology | Location |
 |---|---|---|
-| Backend API | Node.js, Express 5, MongoDB/Mongoose, Socket.IO | [Backend-omaratef](https://github.com/omaratef2802/TaskMangement-Todos/tree/Backend-omaratef) |
-| Frontend | Angular 22, TypeScript, Bootstrap 5.3, RxJS, Socket.IO Client | [Front-end/omaratef-task-invitations](https://github.com/omaratef2802/TaskMangement-Todos/tree/Front-end/omaratef-task-invitations) |
+| Backend API | Node.js, Express 5, MongoDB/Mongoose, Socket.IO | [`backend/`](backend/) |
+| Frontend | Angular 22, TypeScript, Bootstrap 5.3, RxJS, Socket.IO Client | [`frontend/`](frontend/) |
 
 ## Main capabilities
 
@@ -53,11 +53,10 @@ The API defaults to `http://localhost:3000/api`.
 
 ### 2. Start the frontend
 
-In a second terminal, use a separate working directory or a second clone:
+In a second terminal, from the same repository clone:
 
 ```bash
-git clone --branch "Front-end/omaratef-task-invitations" https://github.com/omaratef2802/TaskMangement-Todos.git TaskFlow-frontend
-cd TaskFlow-frontend/frontend
+cd frontend
 npm install
 npm start
 ```
@@ -70,6 +69,6 @@ Open [http://localhost:4200](http://localhost:4200). The development environment
 - [Backend API reference](https://github.com/omaratef2802/TaskMangement-Todos/blob/Backend-omaratef/backend/TODO_API.md)
 - [Frontend setup and implemented screens](https://github.com/omaratef2802/TaskMangement-Todos/blob/Front-end/omaratef-task-invitations/frontend/README.md)
 
-## Important integration note
+## Repository status
 
-The two working branches are intentionally kept separate for now. Review and integrate them together before treating `main` as the deployable, integrated application. Keep credentials in local environment files; never commit `.env` files, API keys, database connection strings, or OAuth secrets.
+`main` contains both application components. Keep credentials in local environment files; never commit `.env` files, API keys, database connection strings, or OAuth secrets.
