@@ -6,6 +6,7 @@ import {ActivatedRoute,RouterLink} from '@angular/router';
 import {ApiService} from './core/api.service';
 import {SocketService} from './core/socket.service';
 import {ListQuery,Todo,TodoPriority,TodoStats,TodoStatus,User} from './core/models';
+import {UserAvatarComponent} from './core/user-avatar.component';
 @Component({standalone:true,selector:'app-dashboard',imports:[CommonModule,DatePipe,RouterLink,UserAvatarComponent],template:`
 <div class="page-heading"><div><span class="eyebrow">{{greeting()}}</span><h1>Overview</h1><p class="muted">Here’s what’s happening with your work today.</p></div><a class="btn-primary" routerLink="/app/tasks"><i class="bi bi-plus-lg"></i> Manage tasks</a></div>
 @if(error()){<div class="alert-error">{{error()}}</div>}
