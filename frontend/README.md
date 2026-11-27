@@ -37,7 +37,7 @@ If the frontend runs on a different origin, configure the backend `CLIENT_URL` t
 ### Organizations and workspaces
 - Browse organizations from a dedicated Organizations page, separately from personal Todo
 - Open an organization to manage members and its workspaces
-- Open a workspace to see and manage its shared tasks directly
+- Open a workspace to see and manage its shared tasks directly at `/app/organizations/:organizationId/workspaces/:workspaceId`
 - Create tasks from inside a workspace; tasks are automatically linked to that workspace and organization
 - Organization membership is checked by the backend for workspace tasks and collaboration
 
