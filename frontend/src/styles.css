@@ -332,3 +332,5 @@ input:focus,select:focus,textarea:focus{border-color:var(--purple)!important;box
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 
 .category-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;background:var(--purple-soft);color:var(--purple);font-size:10px;font-weight:700;white-space:nowrap}.category-chip i{font-size:10px}
+
+.category-nav-link{gap:10px}.category-dot{width:9px;height:9px;border-radius:50%;background:var(--purple);flex:none}.category-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}.category-empty{color:var(--muted);font-size:11px;padding:4px 12px 10px}.category-nav-link .nav-count{margin-left:auto;color:var(--muted);font-variant-numeric:tabular-nums}.category-nav-link.active .nav-count{color:var(--purple)}
