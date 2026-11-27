@@ -27,7 +27,7 @@ const allowedSortFields = [
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const getListOptions = (query = {}) => {
-  const stringFields = ["sortBy", "order", "status", "priority", "type", "category", "search", "overdue", "reviewStatus"];
+  const stringFields = ["sortBy", "order", "status", "priority", "type", "category", "search", "overdue", "reviewStatus", "includeAssigned"];
   for (const field of stringFields) {
     if (query[field] !== undefined && typeof query[field] !== "string") {
       throw new ApiError(400, `Invalid ${field} query parameter`);
@@ -236,7 +236,22 @@ const getTodoByIdService = async (id, userId, isAdmin = false) => {
 
 const getTodosService = async (userId, query = {}) => {
   const options = getListOptions(query);
-  const filter = { ...options.filter, userId };
+  const filter = { ...options.filter };
+  if (query.includeAssigned === "true") {
+    const status = filter.status;
+    delete filter.status;
+    filter.$or = [{ userId }, { assignedTo: userId }];
+    if (status) {
+      filter.$and = [{
+        $or: [
+          { userId, status },
+          { assignedTo: userId, assignedStatuses: { $elemMatch: { userId, status } } },
+        ],
+      }];
+    }
+  } else {
+    filter.userId = userId;
+  }
 
   const [todos, total] = await Promise.all([
     dbTodo.find(filter)
@@ -500,6 +515,11 @@ const unassignTodoService = async (id, ownerId, userId) => {
 const getAssignedToMeService = async (userId, query = {}) => {
   const options = getListOptions(query);
   const filter = { ...options.filter, assignedTo: userId, deletedAt: null };
+  if (filter.status) {
+    const status = filter.status;
+    delete filter.status;
+    filter.assignedStatuses = { $elemMatch: { userId, status } };
+  }
 
   const [todos, total] = await Promise.all([
     dbTodo.find(filter)
