@@ -67,7 +67,7 @@ Open [http://localhost:4200](http://localhost:4200). The development environment
 
 - [Backend setup and configuration](https://github.com/omaratef2802/TaskMangement-Todos/blob/Backend-omaratef/backend/README.md)
 - [Backend API reference](https://github.com/omaratef2802/TaskMangement-Todos/blob/Backend-omaratef/backend/TODO_API.md)
-- [Frontend setup and implemented screens](https://github.com/omaratef2802/TaskMangement-Todos/blob/Front-end/omaratef-task-invitations/frontend/README.md)
+- [Frontend setup and implemented screens](frontend/README.md)
 
 ## Repository status
 
