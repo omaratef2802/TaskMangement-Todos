@@ -7,6 +7,9 @@ import {ApiResponse,Attachment,ListQuery,NotificationItem,Todo,TodoActivity,Todo
 export class ApiService{
  private readonly http=inject(HttpClient);
  private readonly categoriesChanged=new Subject<void>();
+ private readonly todoChanged=new Subject<{todoId:string;action:string}>();
+ readonly todoChanged$=this.todoChanged.asObservable();
+ notifyTodoChanged(event:{todoId:string;action:string}):void{this.todoChanged.next(event);this.categoriesChanged.next();}
  readonly categoriesChanged$=this.categoriesChanged.asObservable();
  notifyCategoriesChanged():void{this.categoriesChanged.next();}
  private readonly users=environment.apiUrl+'/user';
