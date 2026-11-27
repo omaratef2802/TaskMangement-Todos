@@ -1,7 +1,7 @@
 name: Frontend CI
 on:
   push:
-    branches: ["Front-end/omaratef", "Front-end/omaratef-task-invitations"]
+    branches: ["main", "Front-end/omaratef", "Front-end/omaratef-task-invitations"]
     paths: ["frontend/**", ".github/workflows/frontend-ci.yml"]
   pull_request:
     paths: ["frontend/**", ".github/workflows/frontend-ci.yml"]
