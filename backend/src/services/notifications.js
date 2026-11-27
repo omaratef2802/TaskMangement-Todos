@@ -20,10 +20,18 @@ const notifyUsers = async (userIds, payload) => {
     .forEach((result) => console.error("Notification creation failed:", result.reason?.message));
 };
 
+const emitTodoChanged = async (todoId, actorId = null, action = "updated") => {
+  const todo = await dbTodo.findOne({ _id: todoId }).select("userId assignedTo");
+  if (!todo) return;
+  const userIds = [...new Set([todo.userId, ...(todo.assignedTo || [])].filter(Boolean).map(String))];
+  userIds.forEach((userId) => emitToUser(userId, "todo:changed", { todoId: String(todoId), actorId: actorId ? String(actorId) : null, action }));
+};
+
 const notifyTodoParticipants = async (todoId, actorId, payload) => {
   const todo = await dbTodo.findOne({ _id: todoId }).select("userId assignedTo");
   if (!todo) return;
+  await emitTodoChanged(todoId, actorId, payload.type || "updated");
   await notifyUsers([todo.userId, ...todo.assignedTo], { ...payload, actorId, todoId });
 };
 
-module.exports = { createNotification, notifyUsers, notifyTodoParticipants };
+module.exports = { createNotification, notifyUsers, notifyTodoParticipants, emitTodoChanged };
