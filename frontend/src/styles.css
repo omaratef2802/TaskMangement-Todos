@@ -330,3 +330,5 @@ input:focus,select:focus,textarea:focus{border-color:var(--purple)!important;box
  .task-modal{padding:20px}
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+.category-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;background:var(--purple-soft);color:var(--purple);font-size:10px;font-weight:700;white-space:nowrap}.category-chip i{font-size:10px}
