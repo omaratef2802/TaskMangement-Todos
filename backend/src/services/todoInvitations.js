@@ -4,7 +4,7 @@ const dbUser = require("../modules/dbUser");
 const ApiError = require("../utils/ApiError");
 const sendEmail = require("../utils/sendEmail");
 const { assignTodoService } = require("./todos");
-const { notifyUsers } = require("./notifications");
+const { notifyUsers, emitTodoChanged } = require("./notifications");
 
 const escapeHtml = (value = "") => String(value).replace(/[&<>"']/g, (char) => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
@@ -77,6 +77,9 @@ const acceptPendingTodoInvitations = async (user) => {
       { _id: { $in: acceptedIds } },
       { $set: { status: "accepted", acceptedBy: user._id, acceptedAt: new Date() } },
     );
+    await Promise.all(invitations
+      .filter((invitation) => acceptedIds.some((id) => String(id) === String(invitation._id)))
+      .map((invitation) => emitTodoChanged(invitation.todoId, user._id, "invitation_accepted")));
     await Promise.all(invitations
       .filter((invitation) => acceptedIds.some((id) => String(id) === String(invitation._id)))
       .map((invitation) => notifyUsers([invitation.ownerId], {
