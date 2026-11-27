@@ -26,12 +26,11 @@ Create a `.env` file in the `backend` directory. Configure only the integrations
 PORT=3000
 MONGODB_URI=mongodb://127.0.0.1:27017/todos
 SECRET=replace_with_a_long_random_jwt_secret
+RESET_PASSWORD_SECRET=use_a_different_long_random_secret
 CLIENT_URL=http://localhost:4200
 
-# Cloudinary uploads
-CLOUDINARY_CLOUD_NAME=
-CLOUDINARY_API_KEY=
-CLOUDINARY_API_SECRET=
+# Cloudinary uploads (use the Cloudinary URL from your dashboard)
+CLOUDINARY_URL=cloudinary://<api_key>:<api_secret>@<cloud_name>
 
 # Email (Gmail SMTP)
 Email_User=
