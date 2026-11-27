@@ -9,7 +9,10 @@ router.post("/", controller.createOrganization);
 router.get("/:organizationId", controller.getOrganization);
 router.patch("/:organizationId", controller.updateOrganization);
 router.post("/:organizationId/members", controller.addOrganizationMember);
-router.delete("/:organizationId/members/:userId", controller.removeOrganizationMember);
+router.delete(
+  "/:organizationId/members/:userId",
+  controller.removeOrganizationMember,
+);
 router.get("/:organizationId/workspaces", controller.listWorkspaces);
 router.post("/:organizationId/workspaces", controller.createWorkspace);
 router.patch("/workspaces/:workspaceId", controller.updateWorkspace);

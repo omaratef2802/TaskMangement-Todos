@@ -17,11 +17,19 @@ const {
 const register = async (req, res, next) => {
   try {
     const { fname, lname, username, mail, password } = req.body;
-    if (![fname, lname, username, mail, password].every((value) => typeof value === "string" && value.trim())) {
-      throw new ApiError(400, "Please provide all required registration fields");
+    if (
+      ![fname, lname, username, mail, password].every(
+        (value) => typeof value === "string" && value.trim(),
+      )
+    ) {
+      throw new ApiError(
+        400,
+        "Please provide all required registration fields",
+      );
     }
 
-    if (password.length < 8) throw new ApiError(400, "Password must be at least 8 characters");
+    if (password.length < 8)
+      throw new ApiError(400, "Password must be at least 8 characters");
 
     res.status(201).json({
       message: "success",
@@ -35,7 +43,12 @@ const register = async (req, res, next) => {
 const login = async (req, res, next) => {
   try {
     const { mail, password } = req.body;
-    if (typeof mail !== "string" || !mail.trim() || typeof password !== "string" || !password) {
+    if (
+      typeof mail !== "string" ||
+      !mail.trim() ||
+      typeof password !== "string" ||
+      !password
+    ) {
       throw new ApiError(400, "Please provide email and password");
     }
 
@@ -85,8 +98,17 @@ const getUsers = async (req, res, next) => {
     const page = Number(req.query.page || 1);
     const limit = Number(req.query.limit || 10);
 
-    if (!Number.isInteger(page) || page < 1 || !Number.isInteger(limit) || limit < 1 || limit > 100) {
-      throw new ApiError(400, "Page must be positive and limit must be between 1 and 100");
+    if (
+      !Number.isInteger(page) ||
+      page < 1 ||
+      !Number.isInteger(limit) ||
+      limit < 1 ||
+      limit > 100
+    ) {
+      throw new ApiError(
+        400,
+        "Page must be positive and limit must be between 1 and 100",
+      );
     }
 
     const users = await getAllUsers(page, limit);
@@ -112,11 +134,20 @@ const updatePassword = async (req, res, next) => {
     const { confirmPassword, newPassword } = req.body;
     const currentPassword = req.body.Password || req.body.password;
 
-    if (typeof confirmPassword !== "string" || typeof newPassword !== "string" || !confirmPassword || !newPassword) {
-      throw new ApiError(400, "Please provide the new password and confirmation");
+    if (
+      typeof confirmPassword !== "string" ||
+      typeof newPassword !== "string" ||
+      !confirmPassword ||
+      !newPassword
+    ) {
+      throw new ApiError(
+        400,
+        "Please provide the new password and confirmation",
+      );
     }
 
-    if (newPassword.length < 8) throw new ApiError(400, "Password must be at least 8 characters");
+    if (newPassword.length < 8)
+      throw new ApiError(400, "Password must be at least 8 characters");
 
     const user = await updatePassw(
       confirmPassword,
@@ -134,7 +165,8 @@ const updatePassword = async (req, res, next) => {
 const ForgetPassword = async (req, res, next) => {
   try {
     const { mail } = req.body;
-    if (typeof mail !== "string" || !mail.trim()) throw new ApiError(400, "Please provide a valid email");
+    if (typeof mail !== "string" || !mail.trim())
+      throw new ApiError(400, "Please provide a valid email");
 
     res.status(200).json({
       message: "OTP sent successfully",

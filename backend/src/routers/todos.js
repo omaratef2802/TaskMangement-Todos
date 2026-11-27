@@ -31,7 +31,10 @@ const {
   updateTodoComment,
   deleteTodoComment,
 } = require("../controllers/todo");
-const { inviteToTodo, getTodoInvitations } = require("../controllers/todoInvitations");
+const {
+  inviteToTodo,
+  getTodoInvitations,
+} = require("../controllers/todoInvitations");
 const {
   uploadTodoAttachments,
   deleteTodoAttachment,
@@ -63,7 +66,12 @@ router.get("/comments/:todoId", auth, getTodoComments);
 router.post("/comments/:todoId", auth, addTodoComment);
 router.patch("/comments/:todoId/:commentId", auth, updateTodoComment);
 router.delete("/comments/:todoId/:commentId", auth, deleteTodoComment);
-router.post("/:id/attachments", auth, uploadAttachments.array("attachments", 5), uploadTodoAttachments);
+router.post(
+  "/:id/attachments",
+  auth,
+  uploadAttachments.array("attachments", 5),
+  uploadTodoAttachments,
+);
 router.delete("/:id/attachments/:attachmentId", auth, deleteTodoAttachment);
 router.get("/AllTodoByTitle", auth, getTodoByTitle);
 router.get("/AllTodoByStatus", auth, getTodoByStatus);

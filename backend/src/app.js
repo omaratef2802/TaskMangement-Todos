@@ -16,7 +16,10 @@ app.use((req, res, next) => {
     res.setHeader("Access-Control-Allow-Origin", origin);
     res.setHeader("Vary", "Origin");
     res.setHeader("Access-Control-Allow-Credentials", "true");
-    res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+    res.setHeader(
+      "Access-Control-Allow-Methods",
+      "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+    );
     res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization");
   }
   if (req.method === "OPTIONS") return res.sendStatus(204);
@@ -24,12 +27,7 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json());
-app.use((req, res, next) => {
-  if (!req.body || typeof req.body !== "object" || Array.isArray(req.body)) {
-    req.body = {};
-  }
-  next();
-});
+
 app.use(passport.initialize());
 
 const users = require("./routers/users");
@@ -51,23 +49,6 @@ app.use((req, res, next) => {
 app.use((err, req, res, next) => {
   let statusCode = err.status || 500;
   let message = err.message || "Internal Server Error";
-
-  if (err instanceof mongoose.Error.ValidationError) {
-    statusCode = 400;
-    message = Object.values(err.errors)
-      .map((item) => item.message)
-      .join(", ");
-  } else if (err instanceof mongoose.Error.CastError) {
-    statusCode = 400;
-    message = "Invalid ID or value";
-  } else if (err.code === 11000) {
-    statusCode = 409;
-    const field = Object.keys(err.keyValue || {})[0];
-    message = field ? `${field} already exists` : "Duplicate value";
-  } else if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
-    statusCode = 400;
-    message = "Invalid JSON body";
-  }
 
   res.status(statusCode).json({ message });
 });
