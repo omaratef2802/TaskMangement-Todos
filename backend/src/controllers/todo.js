@@ -274,8 +274,15 @@ const getDeletedTodos = async (req, res, next) => {
   catch (err) { next(err); }
 };
 const restoreTodo = async (req, res, next) => {
-  try { res.status(200).json({ message: "Todo restored successfully", data: await restoreTodoService(req.params.id, req.id) }); }
-  catch (err) { next(err); }
+  try {
+    const todo = await restoreTodoService(req.params.id, req.id);
+    await emitTodoChanged(todo._id, req.id, "restored");
+    await notifyUsers(todo.assignedTo, {
+      actorId: req.id, todoId: todo._id, type: "todo_restored",
+      title: "Task restored", message: `"${todo.title}" was restored by its owner.`,
+    });
+    res.status(200).json({ message: "Todo restored successfully", data: todo });
+  } catch (err) { next(err); }
 };
 const permanentlyDeleteTodo = async (req, res, next) => {
   try { res.status(200).json(await permanentlyDeleteTodoService(req.params.id, req.id)); }
