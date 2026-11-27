@@ -243,15 +243,36 @@ const getTodosService = async (userId, query = {}) => {
   if (query.includeAssigned === "true") {
     const status = filter.status;
     delete filter.status;
+    delete filter.$and;
     filter.$or = [{ userId }, { assignedTo: userId }];
+    const conditions = [];
     if (status) {
-      filter.$and = [{
+      conditions.push({
         $or: [
           { userId, status },
           { assignedTo: userId, assignedStatuses: { $elemMatch: { userId, status } } },
         ],
-      }];
+      });
     }
+    if (query.overdue === "true") {
+      conditions.push({
+        deadline: { $lt: new Date() },
+        $or: [
+          { userId, status: { $ne: "done" } },
+          { assignedTo: userId, assignedStatuses: { $elemMatch: { userId, status: { $ne: "done" } } } },
+        ],
+      });
+    } else if (query.overdue === "false") {
+      conditions.push({
+        $or: [
+          { deadline: { $gte: new Date() } },
+          { deadline: null },
+          { userId, status: "done" },
+          { assignedTo: userId, assignedStatuses: { $elemMatch: { userId, status: "done" } } },
+        ],
+      });
+    }
+    if (conditions.length) filter.$and = conditions;
   } else {
     filter.userId = userId;
   }
@@ -518,11 +539,24 @@ const unassignTodoService = async (id, ownerId, userId) => {
 const getAssignedToMeService = async (userId, query = {}) => {
   const options = getListOptions(query);
   const filter = { ...options.filter, assignedTo: userId, deletedAt: null };
-  if (filter.status) {
-    const status = filter.status;
-    delete filter.status;
-    filter.assignedStatuses = { $elemMatch: { userId, status } };
+  const status = filter.status;
+  delete filter.status;
+  delete filter.$and;
+  const conditions = [];
+  if (status) filter.assignedStatuses = { $elemMatch: { userId, status } };
+  if (query.overdue === "true") {
+    conditions.push({ deadline: { $lt: new Date() } });
+    conditions.push({ assignedStatuses: { $elemMatch: { userId, status: { $ne: "done" } } } });
+  } else if (query.overdue === "false") {
+    conditions.push({
+      $or: [
+        { deadline: { $gte: new Date() } },
+        { deadline: null },
+        { assignedStatuses: { $elemMatch: { userId, status: "done" } } },
+      ],
+    });
   }
+  if (conditions.length) filter.$and = conditions;
 
   const [todos, total] = await Promise.all([
     dbTodo.find(filter)
