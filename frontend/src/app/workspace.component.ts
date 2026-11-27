@@ -25,7 +25,7 @@ import {NotificationItem,User} from './core/models';
 <main class="main-area"><header class="topbar"><button class="icon-button mobile-menu" (click)="toggleMenu()"><i class="bi bi-list"></i></button><div class="breadcrumb">Workspace <i class="bi bi-chevron-right"></i> <b>TaskFlow</b></div><div class="topbar-right"><label class="theme-select"><i class="bi bi-circle-half"></i><select [value]="theme.preference()" (change)="theme.set($any($event.target).value)"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></label><button class="icon-button notification-button" routerLink="/app/notifications"><i class="bi bi-bell"></i>@if(unread()){<em></em>}</button><a class="top-avatar" routerLink="/app/profile">{{initials()}}</a></div></header><div class="page-content"><router-outlet /></div>
 <div class="toast-stack" aria-live="polite" aria-relevant="additions">
 @for(toast of toasts();track toast.id){<article class="app-toast">
-<button class="toast-open" (click)="openToast(toast)"><span class="toast-icon"><i class="bi bi-bell"></i></span><span class="toast-copy"><b>{{toast.title}}</b><small>{{toast.message}}</small><em>Open task</em></span></button>
+<button class="toast-open" (click)="openToast(toast)"><span class="toast-icon"><i class="bi bi-bell"></i></span><span class="toast-copy"><b>{{toast.title}}</b><small>{{toast.message}}</small><em>{{toast.todoId&&!['todo_unassigned','todo_deleted'].includes(toast.type)?'Open task':'View notifications'}}</em></span></button>
 <button class="toast-dismiss" (click)="dismissToast(toast.id)" aria-label="Dismiss notification"><i class="bi bi-x-lg"></i></button>
 </article>}
 </div>
@@ -49,10 +49,10 @@ export class WorkspaceComponent implements OnInit,OnDestroy{
   this.toastTimers.set(id,timer);
  }
  dismissToast(id:number):void{const timer=this.toastTimers.get(id);if(timer)window.clearTimeout(timer);this.toastTimers.delete(id);this.toasts.update(items=>items.filter(item=>item.id!==id));}
- openToast(toast:{id:number;notificationId:string;todoId:string|null}):void{
+ openToast(toast:{id:number;notificationId:string;todoId:string|null;type:string}):void{
   if(toast.notificationId)this.api.markNotificationRead(toast.notificationId).subscribe({next:()=>this.refreshUnread(),error:()=>undefined});
   this.dismissToast(toast.id);
-  if(toast.todoId)this.router.navigate(['/app/tasks',toast.todoId]);else this.router.navigateByUrl('/app/notifications');
+  if(toast.todoId&&!['todo_unassigned','todo_deleted'].includes(toast.type))this.router.navigate(['/app/tasks',toast.todoId]);else this.router.navigateByUrl('/app/notifications');
  }
  toggleMenu():void{this.menuOpen.update(v=>!v);}
  closeMenu():void{this.menuOpen.set(false);}
