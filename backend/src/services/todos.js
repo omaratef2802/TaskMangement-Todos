@@ -4,6 +4,7 @@ const dbUser = require("../modules/dbUser");
 const ApiError = require("../utils/ApiError");
 const sendEmail = require("../utils/sendEmail");
 const { logTodoActivity } = require("./todoActivity");
+const { assertProjectAccess } = require("./organizations");
 
 const editableFields = [
   "type",
@@ -27,7 +28,7 @@ const allowedSortFields = [
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const getListOptions = (query = {}) => {
-  const stringFields = ["sortBy", "order", "status", "priority", "type", "category", "search", "overdue", "reviewStatus", "includeAssigned"];
+  const stringFields = ["sortBy", "order", "status", "priority", "type", "category", "search", "overdue", "reviewStatus", "includeAssigned", "projectId"];
   for (const field of stringFields) {
     if (query[field] !== undefined && typeof query[field] !== "string") {
       throw new ApiError(400, `Invalid ${field} query parameter`);
@@ -162,6 +163,13 @@ const createTodos = async (todo = {}, userId) => {
     throw new ApiError(400, "assignedUserIds must be an array");
   }
 
+  if (todo.projectId !== undefined) {
+    const { project, org, workspace } = await assertProjectAccess(todo.projectId, userId);
+    todoData.projectId = project._id;
+    todoData.organizationId = org._id;
+    todoData.workspaceId = workspace._id;
+  }
+
   const assignedUserIds = [...new Set((todo.assignedUserIds || []).map((id) => String(id)))];
   if (assignedUserIds.length > 20) {
     throw new ApiError(400, "You can assign a todo to a maximum of 20 users");
@@ -176,6 +184,14 @@ const createTodos = async (todo = {}, userId) => {
     const users = await dbUser.find({ _id: { $in: assignedUserIds } }).select("_id");
     if (users.length !== assignedUserIds.length) {
       throw new ApiError(404, "One or more users were not found");
+    }
+    if (todoData.organizationId) {
+      const Organization = require("../modules/dbOrganization");
+      const organization = await Organization.findOne({
+        _id: todoData.organizationId,
+        "members.userId": { $all: assignedUserIds },
+      }).select("_id");
+      if (!organization) throw new ApiError(403, "All assignees must belong to this organization");
     }
     todoData.assignedTo = assignedUserIds;
     todoData.assignedStatuses = assignedUserIds.map((assignedId) => ({
@@ -227,12 +243,19 @@ const getTodoByIdService = async (id, userId, isAdmin = false) => {
     throw new ApiError(400, "Invalid todo ID");
   }
 
-  const accessFilter = isAdmin ? {} : { $or: [{ userId }, { assignedTo: userId }] };
-  const todo = await dbTodo.findOne({ _id: id, ...accessFilter, deletedAt: null })
+  const todo = await dbTodo.findOne({ _id: id, deletedAt: null })
     .populate("userId", "fname lname username mail image")
     .populate("assignedTo", "fname lname username image")
-      .populate("assignedStatuses.userId", "fname lname username image");
+    .populate("assignedStatuses.userId", "fname lname username image")
+    .populate("projectId", "name status workspaceId");
   if (!todo) throw new ApiError(404, "Todo not found");
+
+  const isParticipant = String(todo.userId?._id || todo.userId) === String(userId)
+    || (todo.assignedTo || []).some((item) => String(item?._id || item) === String(userId));
+  if (!isAdmin && !isParticipant) {
+    if (!todo.projectId?._id) throw new ApiError(404, "Todo not found");
+    await assertProjectAccess(todo.projectId._id, userId);
+  }
 
   return todo;
 };
@@ -240,7 +263,16 @@ const getTodoByIdService = async (id, userId, isAdmin = false) => {
 const getTodosService = async (userId, query = {}) => {
   const options = getListOptions(query);
   const filter = { ...options.filter };
-  if (query.includeAssigned === "true") {
+  if (query.projectId !== undefined) {
+    const { project } = await assertProjectAccess(query.projectId, userId);
+    filter.projectId = project._id;
+  }
+  if (query.projectId && query.includeAssigned === "true") {
+    throw new ApiError(400, "includeAssigned cannot be combined with projectId");
+  }
+  if (query.projectId) {
+    // Organization members can see every task in a project they can access.
+  } else if (query.includeAssigned === "true") {
     const status = filter.status;
     delete filter.status;
     delete filter.$and;

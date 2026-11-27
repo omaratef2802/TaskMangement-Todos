@@ -9,6 +9,7 @@ import {NotificationsComponent,TrashComponent} from './personal-pages.component'
 import {ProfileComponent,AdminComponent} from './account-pages.component';
 import {ReviewQueueComponent} from './review-queue.component';
 import {SetupAdminComponent} from './setup-admin.component';
+import {OrganizationsComponent} from './organizations.component';
 export const routes:Routes=[
  {path:'login',component:AuthComponent,canActivate:[guestGuard]},
  {path:'setup-admin',component:SetupAdminComponent,canActivate:[guestGuard]},
@@ -16,6 +17,7 @@ export const routes:Routes=[
  {path:'forgot-password',component:AuthComponent,canActivate:[guestGuard],data:{mode:'forgot'}},
  {path:'app',component:WorkspaceComponent,canActivate:[authGuard],children:[
   {path:'',component:DashboardComponent},
+  {path:'organizations',component:OrganizationsComponent},
   {path:'tasks',component:TaskListComponent,data:{mode:'mine'}},
   {path:'assigned',component:TaskListComponent,data:{mode:'assigned'}},
   {path:'assigned-by',component:TaskListComponent,data:{mode:'assignedBy'}},

@@ -7,7 +7,7 @@ import {SocketService} from './core/socket.service';
 import {ThemeService} from './core/theme.service';
 import {NotificationItem,User} from './core/models';
 @Component({standalone:true,selector:'app-workspace',imports:[CommonModule,RouterOutlet,RouterLink,RouterLinkActive],template:`
-<div class="app-shell"><aside class="sidebar" [class.open]="menuOpen()"><a class="brand" routerLink="/app"><span class="brand-mark"><i class="bi bi-check2"></i></span> TaskFlow</a><span class="nav-label">WORKSPACE</span>
+<div class="app-shell"><aside class="sidebar" [class.open]="menuOpen()"><a class="brand" routerLink="/app"><span class="brand-mark"><i class="bi bi-check2"></i></span> TaskFlow</a><span class="nav-label">WORKSPACE</span><a class="nav-link" routerLink="/app/organizations" (click)="closeMenu()" routerLinkActive="active"><i class="bi bi-building"></i> Organizations</a>
 <a class="nav-link" routerLink="/app" (click)="closeMenu()" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}"><i class="bi bi-grid"></i> Overview</a>
 <a class="nav-link" routerLink="/app/tasks" (click)="closeMenu()" routerLinkActive="active"><i class="bi bi-list-task"></i> My tasks</a>
 <a class="nav-link" routerLink="/app/assigned" (click)="closeMenu()" routerLinkActive="active"><i class="bi bi-inbox"></i> Assigned to me</a>

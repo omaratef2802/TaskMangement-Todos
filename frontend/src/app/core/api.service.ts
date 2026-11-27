@@ -2,7 +2,7 @@ import {Injectable,inject} from '@angular/core';
 import {HttpClient,HttpHeaders,HttpParams} from '@angular/common/http';
 import {Observable,Subject} from 'rxjs';
 import {environment} from '../../environments/environment';
-import {ApiResponse,Attachment,ListQuery,NotificationItem,Todo,TodoActivity,TodoComment,TodoStats,User} from './models';
+import {ApiResponse,Attachment,ListQuery,NotificationItem,Todo,TodoActivity,TodoComment,TodoStats,User,Organization,Workspace,Project} from './models';
 @Injectable({providedIn:'root'})
 export class ApiService{
  private readonly http=inject(HttpClient);
@@ -63,6 +63,20 @@ export class ApiService{
  activity(todoId:string,page=1):Observable<ApiResponse<TodoActivity[]>>{return this.http.get<ApiResponse<TodoActivity[]>>(this.todos+'/activity/'+todoId,{params:this.params({page,limit:50})});}
  uploadAttachments(todoId:string,files:File[]):Observable<ApiResponse<Attachment[]>>{const body=new FormData();files.forEach(file=>body.append('attachments',file));return this.http.post<ApiResponse<Attachment[]>>(this.todos+'/'+todoId+'/attachments',body);}
  deleteAttachment(todoId:string,attachmentId:string):Observable<unknown>{return this.http.delete(this.todos+'/'+todoId+'/attachments/'+attachmentId);}
+ organizations():Observable<ApiResponse<Organization[]>>{return this.http.get<ApiResponse<Organization[]>>(environment.apiUrl+'/organizations');}
+ createOrganization(payload:{name:string;description?:string}):Observable<ApiResponse<Organization>>{return this.http.post<ApiResponse<Organization>>(environment.apiUrl+'/organizations',payload);}
+ organization(id:string):Observable<ApiResponse<Organization>>{return this.http.get<ApiResponse<Organization>>(environment.apiUrl+'/organizations/'+id);}
+ updateOrganization(id:string,payload:{name?:string;description?:string}):Observable<ApiResponse<Organization>>{return this.http.patch<ApiResponse<Organization>>(environment.apiUrl+'/organizations/'+id,payload);}
+ addOrganizationMember(id:string,email:string,role='member'):Observable<ApiResponse<Organization>>{return this.http.post<ApiResponse<Organization>>(environment.apiUrl+'/organizations/'+id+'/members',{email,role});}
+ removeOrganizationMember(id:string,userId:string):Observable<ApiResponse<Organization>>{return this.http.delete<ApiResponse<Organization>>(environment.apiUrl+'/organizations/'+id+'/members/'+userId);}
+ workspaces(organizationId:string):Observable<ApiResponse<Workspace[]>>{return this.http.get<ApiResponse<Workspace[]>>(environment.apiUrl+'/organizations/'+organizationId+'/workspaces');}
+ createWorkspace(organizationId:string,payload:{name:string;key?:string;description?:string}):Observable<ApiResponse<Workspace>>{return this.http.post<ApiResponse<Workspace>>(environment.apiUrl+'/organizations/'+organizationId+'/workspaces',payload);}
+ updateWorkspace(id:string,payload:{name?:string;key?:string;description?:string}):Observable<ApiResponse<Workspace>>{return this.http.patch<ApiResponse<Workspace>>(environment.apiUrl+'/organizations/workspaces/'+id,payload);}
+ archiveWorkspace(id:string):Observable<ApiResponse<{archived:boolean}>>{return this.http.delete<ApiResponse<{archived:boolean}>>(environment.apiUrl+'/organizations/workspaces/'+id);}
+ projects(workspaceId:string):Observable<ApiResponse<Project[]>>{return this.http.get<ApiResponse<Project[]>>(environment.apiUrl+'/organizations/workspaces/'+workspaceId+'/projects');}
+ createProject(workspaceId:string,payload:{name:string;description?:string;dueDate?:string|null}):Observable<ApiResponse<Project>>{return this.http.post<ApiResponse<Project>>(environment.apiUrl+'/organizations/workspaces/'+workspaceId+'/projects',payload);}
+ updateProject(id:string,payload:{name?:string;description?:string;status?:Project['status'];dueDate?:string|null}):Observable<ApiResponse<Project>>{return this.http.patch<ApiResponse<Project>>(environment.apiUrl+'/organizations/projects/'+id,payload);}
+ archiveProject(id:string):Observable<ApiResponse<Project>>{return this.http.delete<ApiResponse<Project>>(environment.apiUrl+'/organizations/projects/'+id);}
  notifications(query:{page?:number;limit?:number;isRead?:boolean}={}):Observable<ApiResponse<NotificationItem[]>>{return this.http.get<ApiResponse<NotificationItem[]>>(this.notificationsUrl,{params:this.params(query)});}
  unreadCount():Observable<ApiResponse<{unreadCount:number}>>{return this.http.get<ApiResponse<{unreadCount:number}>>(this.notificationsUrl+'/unread-count');}
  markNotificationRead(id:string):Observable<unknown>{return this.http.patch(this.notificationsUrl+'/'+id+'/read',{});}
