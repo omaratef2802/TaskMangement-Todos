@@ -10,6 +10,7 @@ const {
   getAllTodos,
   getReviewQueue,
   getTodoStats,
+  getTodoCategories,
   assignTodo,
   unassignTodo,
   getAssignedToMe,
@@ -41,6 +42,7 @@ const { auth, relasedTo } = require("../middlewares/auth");
 
 router.get("/AllTodosUsers", auth, relasedTo("Admin"), getAllTodos);
 router.get("/stats", auth, getTodoStats);
+router.get("/categories", auth, getTodoCategories);
 router.get("/review-queue", auth, getReviewQueue);
 router.get("/assignedToMe", auth, getAssignedToMe);
 router.get("/assignedByMe", auth, getAssignedByMe);
