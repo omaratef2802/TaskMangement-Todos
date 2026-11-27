@@ -30,6 +30,16 @@ Assignment payloads: `{ "userIds": ["USER_ID_1", "USER_ID_2"] }`; unassign: `{ "
 
 Each assignee has a separate status in `assignedStatuses`; updating one assignee does not change the owner's status or another assignee's status. Maximum 20 assignees.
 
+## Review workflow
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/review-queue` | List tasks waiting for owner/admin review |
+| POST | `/:id/submit-review` | Assignee submits completed work for review |
+| PATCH | `/:id/review` | Owner/Admin approves or requests changes | 
+
+A task can be submitted after all assigned teammates have completed their individual work. While review is pending or approved, assignees cannot change their progress status. If the owner or an administrator requests changes, the task and all assignee progress statuses return to `in-progress`; the review note is retained and assignees can work and submit again. The owner or an administrator can also revoke an earlier approval by requesting changes. An approved assignee cannot change their status; only the task owner can edit the task's overall status.
+
 ## Attachments
 
 | Method | Endpoint | Description |
