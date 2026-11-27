@@ -99,7 +99,7 @@ const deleteTodoAttachmentService = async (todoId, attachmentId, userId) => {
     name: attachment.name,
   });
 
-  return { message: "Attachment deleted successfully" };
+  return { message: "Attachment deleted successfully", name: attachment.name };
 };
 
 module.exports = {
