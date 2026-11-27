@@ -234,10 +234,10 @@ const updateAssignedTodoStatus = async (req, res, next) => {
       req.id,
       req.body.status,
     );
-    await emitTodoChanged(todo._id, req.id, "assigned_status_updated");
-    await notifyUsers([todo.userId], {
-      actorId: req.id, todoId: todo._id, type: "status_updated",
-      title: "Assigned task updated", message: `An assignee changed "${todo.title}" to ${req.body.status}.`,
+    await notifyTodoParticipants(todo._id, req.id, {
+      type: "status_updated",
+      title: "Task progress updated",
+      message: `An assignee changed "${todo.title}" to ${req.body.status}.`,
     });
     res.status(200).json({ message: "Todo status updated successfully", data: todo });
   } catch (err) {
@@ -292,7 +292,6 @@ const getTodoComments = async (req, res, next) => {
 const addTodoComment = async (req, res, next) => {
   try {
     const comment = await collaboration.addTodoCommentService(req.params.todoId, req.id, req.body.text);
-    await emitTodoChanged(req.params.todoId, req.id, "comment_added");
     await notifyTodoParticipants(req.params.todoId, req.id, {
       type: "comment_added", title: "New task comment",
       message: "A new comment was added to a task you participate in.",
@@ -301,11 +300,11 @@ const addTodoComment = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 const updateTodoComment = async (req, res, next) => {
-  try { const comment = await collaboration.updateTodoCommentService(req.params.todoId, req.params.commentId, req.id, req.body.text); await emitTodoChanged(req.params.todoId, req.id, "comment_updated"); res.status(200).json({ message: "Comment updated successfully", data: comment }); }
+  try { const comment = await collaboration.updateTodoCommentService(req.params.todoId, req.params.commentId, req.id, req.body.text); await notifyTodoParticipants(req.params.todoId, req.id, { type: "comment_updated", title: "Task comment updated", message: "A comment was updated on a task you participate in." }); res.status(200).json({ message: "Comment updated successfully", data: comment }); }
   catch (err) { next(err); }
 };
 const deleteTodoComment = async (req, res, next) => {
-  try { await collaboration.deleteTodoCommentService(req.params.todoId, req.params.commentId, req.id); await emitTodoChanged(req.params.todoId, req.id, "comment_deleted"); res.status(200).json({ message: "Comment deleted successfully" }); }
+  try { await collaboration.deleteTodoCommentService(req.params.todoId, req.params.commentId, req.id); await notifyTodoParticipants(req.params.todoId, req.id, { type: "comment_deleted", title: "Task comment deleted", message: "A comment was deleted from a task you participate in." }); res.status(200).json({ message: "Comment deleted successfully" }); }
   catch (err) { next(err); }
 };
 
