@@ -6,6 +6,7 @@ const {
   getTodosService,
   getAllTodosService,
   getTodoStatsService,
+  getTodoCategoriesService,
   assignTodoService,
   unassignTodoService,
   getAssignedToMeService,
@@ -126,6 +127,14 @@ const getReviewQueue = async (req, res, next) => {
       data: result.todos,
       pagination: result.pagination,
     });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const getTodoCategories = async (req, res, next) => {
+  try {
+    res.status(200).json({ message: "success", data: await getTodoCategoriesService(req.id) });
   } catch (err) {
     next(err);
   }
@@ -341,6 +350,7 @@ module.exports = {
   getAllTodos,
   getReviewQueue,
   getTodoStats,
+  getTodoCategories,
   assignTodo,
   unassignTodo,
   getAssignedToMe,
