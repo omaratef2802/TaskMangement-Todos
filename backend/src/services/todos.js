@@ -33,6 +33,9 @@ const getListOptions = (query = {}) => {
       throw new ApiError(400, `Invalid ${field} query parameter`);
     }
   }
+  if (query.includeAssigned !== undefined && !["true", "false"].includes(query.includeAssigned)) {
+    throw new ApiError(400, "includeAssigned must be true or false");
+  }
 
   if (query.page !== undefined && typeof query.page !== "string") {
     throw new ApiError(400, "Invalid page query parameter");
