@@ -36,11 +36,13 @@ const users = require("./routers/users");
 const todos = require("./routers/todos");
 const notifications = require("./routers/notifications");
 const admin = require("./routers/admin");
+const organizations = require("./routers/organizations");
 
 app.use("/api/user", users);
 app.use("/api/todo", todos);
 app.use("/api/notifications", notifications);
 app.use("/api/admin", admin);
+app.use("/api/organizations", organizations);
 
 app.use((req, res, next) => {
   next(new ApiError(404, "Route not found"));

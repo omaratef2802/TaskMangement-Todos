@@ -33,6 +33,9 @@ const todoSchema = mongoose.Schema(
       ref: "users",
       required: [true, "the user id is required"],
     },
+    organizationId: { type: mongoose.Schema.Types.ObjectId, ref: "organizations", default: null, index: true },
+    workspaceId: { type: mongoose.Schema.Types.ObjectId, ref: "workspaces", default: null, index: true },
+    projectId: { type: mongoose.Schema.Types.ObjectId, ref: "projects", default: null, index: true },
     deadline: { type: Date },
     completedAt: { type: Date, default: null },
     reviewStatus: { type: String, enum: ["not-submitted", "pending", "changes-requested", "approved"], default: "not-submitted" },
@@ -62,6 +65,7 @@ todoSchema.index({ userId: 1, status: 1 });
 todoSchema.index({ assignedTo: 1, createdAt: -1 });
 todoSchema.index({ deletedAt: 1, createdAt: -1 });
 todoSchema.index({ "assignedStatuses.userId": 1, createdAt: -1 });
+todoSchema.index({ projectId: 1, deletedAt: 1, createdAt: -1 });
 
 const todoModule = mongoose.model("todos", todoSchema);
 
