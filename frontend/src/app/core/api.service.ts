@@ -28,6 +28,7 @@ export class ApiService{
  usersList(page=1,limit=20):Observable<ApiResponse<User[]>>{return this.http.get<ApiResponse<User[]>>(this.users+'/MyUsers',{params:this.params({page,limit})});}
  adminsList():Observable<ApiResponse<User[]>>{return this.http.get<ApiResponse<User[]>>(environment.apiUrl+'/admin/admins');}
  createAdmin(payload:{fname:string;lname:string;username:string;mail:string;password:string}):Observable<ApiResponse<User>>{return this.http.post<ApiResponse<User>>(environment.apiUrl+'/admin/create-admin',payload);}
+ setupFirstAdmin(payload:{fname:string;lname:string;username:string;mail:string;password:string}):Observable<ApiResponse<User>>{return this.http.post<ApiResponse<User>>(environment.apiUrl+'/admin/setup',payload);}
  deleteUser(id:string):Observable<unknown>{return this.http.delete(this.users+'/deleteUsers/'+id);}
  stats():Observable<ApiResponse<TodoStats>>{return this.http.get<ApiResponse<TodoStats>>(this.todos+'/stats');}
  categories():Observable<ApiResponse<{name:string;count:number}[]>>{return this.http.get<ApiResponse<{name:string;count:number}[]>>(this.todos+'/categories');}
