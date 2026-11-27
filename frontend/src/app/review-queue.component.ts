@@ -1,5 +1,6 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { RouterLink } from '@angular/router';
 import { ApiService } from './core/api.service';
 import { Todo } from './core/models';
@@ -10,15 +11,21 @@ import { Todo } from './core/models';
   imports: [CommonModule, DatePipe, RouterLink],
   templateUrl: './review-queue.component.html'
 })
-export class ReviewQueueComponent implements OnInit {
+export class ReviewQueueComponent implements OnInit, OnDestroy {
   private readonly api = inject(ApiService);
 
   readonly tasks = signal<Todo[]>([]);
   readonly loading = signal(false);
   readonly error = signal('');
+  private changesSubscription?: Subscription;
 
   ngOnInit(): void {
     this.load();
+    this.changesSubscription = this.api.todoChanged$.subscribe(() => this.load());
+  }
+
+  ngOnDestroy(): void {
+    this.changesSubscription?.unsubscribe();
   }
 
   load(): void {
