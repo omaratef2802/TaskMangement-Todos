@@ -1,7 +1,7 @@
 import {CommonModule,DatePipe} from '@angular/common';
 import {Component,OnDestroy,OnInit,inject,signal} from '@angular/core';
 import {FormBuilder,ReactiveFormsModule,Validators} from '@angular/forms';
-import {Subscription} from 'rxjs';
+import {forkJoin,Subscription} from 'rxjs';
 import {ActivatedRoute,RouterLink} from '@angular/router';
 import {ApiService} from './core/api.service';
 import {SocketService} from './core/socket.service';
@@ -17,7 +17,7 @@ export class DashboardComponent implements OnInit,OnDestroy{
  private readonly api=inject(ApiService);readonly stats=signal<TodoStats|null>(null);readonly tasks=signal<Todo[]>([]);readonly loading=signal(true);readonly error=signal('');private changesSubscription?:Subscription;
  ngOnInit():void{this.load();this.changesSubscription=this.api.todoChanged$.subscribe(()=>this.load());}
  ngOnDestroy():void{this.changesSubscription?.unsubscribe();}
- load():void{this.api.stats().subscribe({next:r=>this.stats.set(r.data),error:e=>this.error.set(e.error?.message||'Could not load statistics.')});this.api.list({page:1,limit:6,sortBy:'createdAt',order:'desc'}).subscribe({next:r=>{this.tasks.set(r.data);this.loading.set(false);},error:e=>{this.error.set(e.error?.message||'Could not load tasks.');this.loading.set(false);}});}
+ load():void{this.api.stats().subscribe({next:r=>this.stats.set(r.data),error:e=>this.error.set(e.error?.message||'Could not load statistics.')});forkJoin({owned:this.api.list({page:1,limit:6,sortBy:'createdAt',order:'desc'}),assigned:this.api.assignedToMe({page:1,limit:6,sortBy:'createdAt',order:'desc'})}).subscribe({next:r=>{const merged=[...r.owned.data,...r.assigned.data].filter((todo,index,all)=>all.findIndex(item=>item._id===todo._id)===index).sort((a,b)=>new Date(b.createdAt).getTime()-new Date(a.createdAt).getTime()).slice(0,6);this.tasks.set(merged);this.loading.set(false);},error:e=>{this.error.set(e.error?.message||'Could not load tasks.');this.loading.set(false);}});}
  greeting():string{const h=new Date().getHours();return h<12?'GOOD MORNING':h<18?'GOOD AFTERNOON':'GOOD EVENING';}
  completion():number{const s=this.stats();return s?.total?Math.round(s.completed/s.total*100):0;}
  statusLabel(s:TodoStatus):string{return s==='done'?'Completed':s==='in-progress'?'In progress':'Not started';}
