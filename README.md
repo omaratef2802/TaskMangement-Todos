@@ -79,3 +79,8 @@ Open [http://localhost:4200](http://localhost:4200). The development environment
 ## Repository status
 
 `main` contains both application components. Keep credentials in local environment files; never commit `.env` files, API keys, database connection strings, or OAuth secrets.
+
+### Profile photos
+- Users can upload a PNG, JPEG, or WebP profile photo (up to 5 MB) from Profile settings.
+- The backend stores the image in Cloudinary and saves its URL in the user's `image` field, so populated user records display the same photo across organizations, workspaces, task assignments, comments, activity, and admin views.
+- A Socket.IO `profile:updated` event refreshes visible avatars for connected users without requiring a page reload.
