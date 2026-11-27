@@ -6,7 +6,7 @@ const notificationSchema = new mongoose.Schema({
   todoId: { type: mongoose.Schema.Types.ObjectId, ref: "todos", default: null },
   type: {
     type: String,
-    enum: ["todo_created", "todo_updated", "todo_assigned", "todo_unassigned", "status_updated", "comment_added", "deadline_reminder", "todo_deleted", "todo_restored", "todo_submitted_for_review", "todo_review_approved", "todo_changes_requested", "todo_invitation_accepted"],
+    enum: ["todo_created", "todo_updated", "todo_assigned", "todo_unassigned", "status_updated", "comment_added", "deadline_reminder", "todo_deleted", "todo_restored", "todo_submitted_for_review", "todo_review_approved", "todo_changes_requested", "todo_invitation_accepted", "attachment_added", "attachment_deleted"],
     required: true,
   },
   title: { type: String, required: true, trim: true, maxlength: 150 },
