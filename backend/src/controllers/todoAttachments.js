@@ -14,7 +14,7 @@ const uploadTodoAttachments = async (req, res, next) => {
     await notifyTodoParticipants(req.params.id, req.id, {
       type: "attachment_added",
       title: "Task attachment added",
-      message: "A new file was added to a task you participate in.",
+      message: `New file(s) added: ${attachments.map((file) => file.name).join(", ").slice(0, 400)}` ,
     });
     res.status(201).json({
       message: "Attachments uploaded successfully",
@@ -35,7 +35,7 @@ const deleteTodoAttachment = async (req, res, next) => {
     await notifyTodoParticipants(req.params.id, req.id, {
       type: "attachment_deleted",
       title: "Task attachment removed",
-      message: "A file was removed from a task you participate in.",
+      message: `File removed: ${result.name || "an attachment"}` ,
     });
     res.status(200).json(result);
   } catch (error) {
