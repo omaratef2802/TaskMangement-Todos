@@ -1,11 +1,14 @@
 import {Injectable,inject} from '@angular/core';
 import {HttpClient,HttpHeaders,HttpParams} from '@angular/common/http';
-import {Observable} from 'rxjs';
+import {Observable,Subject} from 'rxjs';
 import {environment} from '../../environments/environment';
 import {ApiResponse,Attachment,ListQuery,NotificationItem,Todo,TodoActivity,TodoComment,TodoStats,User} from './models';
 @Injectable({providedIn:'root'})
 export class ApiService{
  private readonly http=inject(HttpClient);
+ private readonly categoriesChanged=new Subject<void>();
+ readonly categoriesChanged$=this.categoriesChanged.asObservable();
+ notifyCategoriesChanged():void{this.categoriesChanged.next();}
  private readonly users=environment.apiUrl+'/user';
  private readonly todos=environment.apiUrl+'/todo';
  private readonly notificationsUrl=environment.apiUrl+'/notifications';
@@ -27,6 +30,7 @@ export class ApiService{
  createAdmin(payload:{fname:string;lname:string;username:string;mail:string;password:string}):Observable<ApiResponse<User>>{return this.http.post<ApiResponse<User>>(environment.apiUrl+'/admin/create-admin',payload);}
  deleteUser(id:string):Observable<unknown>{return this.http.delete(this.users+'/deleteUsers/'+id);}
  stats():Observable<ApiResponse<TodoStats>>{return this.http.get<ApiResponse<TodoStats>>(this.todos+'/stats');}
+ categories():Observable<ApiResponse<{name:string;count:number}[]>>{return this.http.get<ApiResponse<{name:string;count:number}[]>>(this.todos+'/categories');}
  list(query:ListQuery={}):Observable<ApiResponse<Todo[]>>{return this.http.get<ApiResponse<Todo[]>>(this.todos+'/AllTodos',{params:this.params(query)});}
  allUsersTodos(query:ListQuery={}):Observable<ApiResponse<Todo[]>>{return this.http.get<ApiResponse<Todo[]>>(this.todos+'/AllTodosUsers',{params:this.params(query)});}
  reviewQueue(page=1,limit=20):Observable<ApiResponse<Todo[]>>{return this.http.get<ApiResponse<Todo[]>>(this.todos+'/review-queue',{params:this.params({page,limit,sortBy:'createdAt',order:'asc'})});}
