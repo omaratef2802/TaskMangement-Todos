@@ -32,7 +32,7 @@ Every organization member can access its workspaces and the tasks inside them. O
 
 The application hierarchy is `Organizations → Workspaces → Tasks`. To create a task directly inside a workspace, send `workspaceId` in the normal `POST /api/todo/addTodo` body. The API derives `organizationId` from the workspace; clients cannot choose the organization independently. When listing tasks, add `workspaceId` to `GET /api/todo/AllTodos`; every current member of that organization can see tasks in the selected workspace. Assignees on workspace tasks must also be organization members. Personal Todo lists and statistics exclude organization workspace tasks. The optional project-scoped API remains available for compatibility, but it is not part of the main frontend navigation.
 
-Base URL for personal and workspace task operations: `/api/todo`.
+Base URL for personal and workspace task operations: `/api/todo`. Personal Todo queries omit organization tasks; workspace queries must include the authenticated member's `workspaceId`.
 
 ## Todo and assignment endpoints
 
