@@ -95,6 +95,17 @@ socket.on("notification:new", (notification) => {
 });
 ```
 
-The server authenticates the socket with the JWT and joins it to a private `user:<userId>` room. Notifications are stored in MongoDB before the `notification:new` event is emitted. Events are currently created for task assignment/removal, assignee status changes, task updates/deletion, comments, and successful 24-hour deadline reminders.
+The server authenticates the socket with the JWT and joins it to a private `user:<userId>` room. Notifications are stored in MongoDB before the `notification:new` event is emitted. Events are created for task assignment/removal, assignee status changes, task updates/deletion/restoration, comments, attachment uploads/deletions, review actions, invitation acceptance, and successful 24-hour deadline reminders. Attachment notifications include the affected file name(s). When a participant changes a task or its attachments, the server also emits `todo:changed` to the task owner and assigned users so open task views can reload the latest task data.
 
 Install dependencies after pulling the changes with `npm install`. For a frontend running on another origin, set `CLIENT_URL` in `.env` to its allowed origin (comma-separated origins are supported). The server defaults to permissive CORS when `CLIENT_URL` is not set; configure it for production.
+
+
+## Admin endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/admin/setup` | One-time initial Admin setup while no Admin account exists |
+| POST | `/api/admin/create-admin` | Admin creates another Admin account |
+| GET | `/api/admin/admins` | List Admin accounts |
+
+The setup endpoint is intended only for the initial bootstrap. The create-admin and list-admins endpoints require an authenticated Admin account.
