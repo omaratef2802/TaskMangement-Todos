@@ -305,51 +305,83 @@ const getTodoCategoriesService = async (userId) => {
 };
 
 const getTodoStatsService = async (userId) => {
-  const [
-    total,
-    notStarted,
-    inProgress,
-    completed,
-    overdue,
-    low,
-    medium,
-    high,
-    assignedToMe,
-    assignedByMe,
-    unassigned,
-  ] = await Promise.all([
-      dbTodo.countDocuments({ userId, deletedAt: null }),
-      dbTodo.countDocuments({ userId, deletedAt: null, status: "not-started" }),
-      dbTodo.countDocuments({ userId, deletedAt: null, status: "in-progress" }),
-      dbTodo.countDocuments({ userId, deletedAt: null, status: "done" }),
-      dbTodo.countDocuments({
-        userId,
-        deletedAt: null,
-        status: { $ne: "done" },
-        deadline: { $lt: new Date() },
-      }),
-      dbTodo.countDocuments({ userId, deletedAt: null, priority: "low" }),
-      dbTodo.countDocuments({ userId, deletedAt: null, priority: "medium" }),
-      dbTodo.countDocuments({ userId, deletedAt: null, priority: "high" }),
-      dbTodo.countDocuments({ assignedTo: userId, userId: { $ne: userId }, deletedAt: null }),
-      dbTodo.countDocuments({ userId, assignedTo: { $exists: true, $ne: [] }, deletedAt: null }),
-      dbTodo.countDocuments({
-        userId,
-        deletedAt: null,
-        $or: [
-          { assignedTo: { $exists: false } },
-          { assignedTo: { $size: 0 } },
-        ],
-      }),
-    ]);
+  const objectUserId = new mongoose.Types.ObjectId(userId);
+  const [workspace, assignedToMe, assignedByMe, unassigned] = await Promise.all([
+    dbTodo.aggregate([
+      {
+        $match: {
+          deletedAt: null,
+          $or: [{ userId: objectUserId }, { assignedTo: objectUserId }],
+        },
+      },
+      {
+        $addFields: {
+          isOwner: { $eq: ["$userId", objectUserId] },
+          myAssignment: {
+            $first: {
+              $filter: {
+                input: { $ifNull: ["$assignedStatuses", []] },
+                as: "entry",
+                cond: { $eq: ["$$entry.userId", objectUserId] },
+              },
+            },
+          },
+        },
+      },
+      {
+        $addFields: {
+          myStatus: {
+            $cond: [
+              "$isOwner",
+              "$status",
+              { $ifNull: ["$myAssignment.status", "not-started"] },
+            ],
+          },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: 1 },
+          notStarted: { $sum: { $cond: [{ $eq: ["$myStatus", "not-started"] }, 1, 0] } },
+          inProgress: { $sum: { $cond: [{ $eq: ["$myStatus", "in-progress"] }, 1, 0] } },
+          completed: { $sum: { $cond: [{ $eq: ["$myStatus", "done"] }, 1, 0] } },
+          overdue: {
+            $sum: {
+              $cond: [
+                { $and: [{ $ne: ["$myStatus", "done"] }, { $ne: ["$deadline", null] }, { $lt: ["$deadline", new Date()] }] },
+                1,
+                0,
+              ],
+            },
+          },
+          low: { $sum: { $cond: [{ $eq: ["$priority", "low"] }, 1, 0] } },
+          medium: { $sum: { $cond: [{ $eq: ["$priority", "medium"] }, 1, 0] } },
+          high: { $sum: { $cond: [{ $eq: ["$priority", "high"] }, 1, 0] } },
+        },
+      },
+    ]),
+    dbTodo.countDocuments({ assignedTo: objectUserId, userId: { $ne: objectUserId }, deletedAt: null }),
+    dbTodo.countDocuments({ userId: objectUserId, assignedTo: { $exists: true, $ne: [] }, deletedAt: null }),
+    dbTodo.countDocuments({
+      userId: objectUserId,
+      deletedAt: null,
+      $or: [{ assignedTo: { $exists: false } }, { assignedTo: { $size: 0 } }],
+    }),
+  ]);
+
+  const stats = workspace[0] || {
+    total: 0, notStarted: 0, inProgress: 0, completed: 0, overdue: 0,
+    low: 0, medium: 0, high: 0,
+  };
 
   return {
-    total,
-    notStarted,
-    inProgress,
-    completed,
-    overdue,
-    priorities: { low, medium, high },
+    total: stats.total,
+    notStarted: stats.notStarted,
+    inProgress: stats.inProgress,
+    completed: stats.completed,
+    overdue: stats.overdue,
+    priorities: { low: stats.low, medium: stats.medium, high: stats.high },
     assignments: { assignedToMe, assignedByMe, unassigned },
   };
 };
