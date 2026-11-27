@@ -2,6 +2,7 @@ const {
   addTodoAttachmentsService,
   deleteTodoAttachmentService,
 } = require("../services/todoAttachments");
+const { emitTodoChanged } = require("../services/notifications");
 
 const uploadTodoAttachments = async (req, res, next) => {
   try {
@@ -10,6 +11,7 @@ const uploadTodoAttachments = async (req, res, next) => {
       req.id,
       req.files,
     );
+    await emitTodoChanged(req.params.id, req.id, "attachments_updated");
     res.status(201).json({
       message: "Attachments uploaded successfully",
       data: attachments,
@@ -26,6 +28,7 @@ const deleteTodoAttachment = async (req, res, next) => {
       req.params.attachmentId,
       req.id,
     );
+    await emitTodoChanged(req.params.id, req.id, "attachment_deleted");
     res.status(200).json(result);
   } catch (error) {
     next(error);
