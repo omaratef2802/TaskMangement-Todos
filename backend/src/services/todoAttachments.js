@@ -4,7 +4,7 @@ const cloudinary = require("../config/cloudinary");
 const uploadAttachment = require("../utils/uploadAttachment");
 const ApiError = require("../utils/ApiError");
 const { logTodoActivity } = require("./todoActivity");
-const { assertProjectAccess } = require("./organizations");
+const { assertProjectAccess, assertWorkspaceAccess } = require("./organizations");
 
 const MAX_ATTACHMENTS_PER_TODO = 20;
 
@@ -17,6 +17,8 @@ const getAccessibleTodo = async (todoId, userId) => {
   if (!todo) throw new ApiError(404, "Todo not found");
   if (todo.projectId) {
     await assertProjectAccess(todo.projectId, userId);
+  } else if (todo.workspaceId) {
+    await assertWorkspaceAccess(todo.workspaceId, userId);
   } else if (String(todo.userId) !== String(userId)) {
     const assigned = await dbTodo.exists({ _id: todoId, assignedTo: userId, deletedAt: null });
     if (!assigned) throw new ApiError(404, "Todo not found");

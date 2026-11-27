@@ -14,8 +14,9 @@ The backend and frontend are integrated in the `main` branch. The previous worki
 ## Main capabilities
 
 - Authentication, registration, password recovery, and role-based admin access.
-- Organizations with owner/admin/member roles, multiple workspaces per organization, and projects inside each workspace.
-- Project-scoped tasks linked to their organization and workspace, with organization membership enforced by the API.
+- Organizations with owner/admin/member roles and multiple workspaces per organization.
+- Workspace-scoped tasks: organization members open a workspace to see and manage its shared tasks; personal Todo items stay separate.
+- Organization membership is enforced by the API for workspace tasks, comments, activity, and attachments.
 - Task creation, editing, filtering, categories, priorities, deadlines, and soft deletion.
 - Task assignment, invitations, and independent progress tracking for each assignee.
 - Comments, activity history, and Cloudinary file attachments.

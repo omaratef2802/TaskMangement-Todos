@@ -35,12 +35,11 @@ If the frontend runs on a different origin, configure the backend `CLIENT_URL` t
 - JWT sent in the `Authorization` header without the `Bearer` prefix
 
 ### Organizations and workspaces
-- Create and manage organizations
-- Add registered users as organization members
-- Create multiple workspaces inside an organization
-- Create and manage projects inside a workspace
-- Open a project's task list; new tasks created from that view are attached to the project
-- Organization membership is checked by the backend for project and task access
+- Browse organizations from a dedicated Organizations page, separately from personal Todo
+- Open an organization to manage members and its workspaces
+- Open a workspace to see and manage its shared tasks directly
+- Create tasks from inside a workspace; tasks are automatically linked to that workspace and organization
+- Organization membership is checked by the backend for workspace tasks and collaboration
 
 ### Workspace
 - Dashboard statistics and recent tasks

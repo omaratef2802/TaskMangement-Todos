@@ -16,4 +16,4 @@ export interface TodoStats{total:number;notStarted:number;inProgress:number;comp
 export interface TodoComment{_id:string;todoId:string;userId:User;text:string;createdAt:string;updatedAt:string}
 export interface TodoActivity{_id:string;todoId:string;actorId:User;action:string;details:Record<string,unknown>;createdAt:string}
 export interface NotificationItem{_id:string;title:string;message:string;type:string;isRead:boolean;createdAt:string;actorId?:User|null;todoId?:{_id:string;title:string}|null}
-export interface ListQuery{page?:number;limit?:number;sortBy?:'createdAt'|'updatedAt'|'deadline'|'title'|'status'|'priority';order?:'asc'|'desc';status?:TodoStatus;priority?:TodoPriority;type?:TodoType;category?:string;search?:string;overdue?:boolean;reviewStatus?:ReviewStatus;includeAssigned?:boolean;projectId?:string}
+export interface ListQuery{page?:number;limit?:number;sortBy?:'createdAt'|'updatedAt'|'deadline'|'title'|'status'|'priority';order?:'asc'|'desc';status?:TodoStatus;priority?:TodoPriority;type?:TodoType;category?:string;search?:string;overdue?:boolean;reviewStatus?:ReviewStatus;includeAssigned?:boolean;projectId?:string;workspaceId?:string}

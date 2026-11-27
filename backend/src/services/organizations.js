@@ -26,6 +26,8 @@ const requireWorkspace = async (workspaceId, userId, adminOnly = false) => {
   const access = await requireOrg(workspace.organizationId, userId, adminOnly);
   return { workspace, ...access };
 };
+const assertWorkspaceAccess = async (workspaceId, userId) => requireWorkspace(workspaceId, userId);
+
 const assertProjectAccess = async (projectId, userId) => {
   validId(projectId, "project ID");
   const project = await Project.findById(projectId);
@@ -172,5 +174,5 @@ module.exports = {
   listOrganizations, createOrganization, getOrganization, updateOrganization,
   addOrganizationMember, removeOrganizationMember, listWorkspaces, createWorkspace,
   updateWorkspace, archiveWorkspace, listProjects, createProject, updateProject,
-  deleteProject, assertProjectAccess,
+  deleteProject, assertProjectAccess, assertWorkspaceAccess,
 };

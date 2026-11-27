@@ -28,11 +28,11 @@ Member addition body: `{ "email": "teammate@example.com", "role": "member" }`; r
 Workspace creation body: `{ "name": "Backend", "key": "BACK", "description": "Backend engineering" }`; key is optional and is generated from the name when omitted.
 Project creation body: `{ "name": "TaskFlow API", "description": "Project description", "dueDate": "2026-12-31T00:00:00.000Z" }`.
 
-Every organization member can access its workspaces and projects. Organization owners/admins manage members and workspaces. Project creators and organization admins can update or archive projects. Removing a member also removes their assignments from that organization's tasks. Project task detail, comments, activity, and attachments require current organization membership.
+Every organization member can access its workspaces and the tasks inside them. Organization owners/admins manage members and workspaces. Removing a member also removes their assignments from that organization's tasks. Workspace task detail, comments, activity, and attachments require current organization membership.
 
-To create a task inside a project, send `projectId` in the normal `POST /api/todo/addTodo` body. The API derives `organizationId` and `workspaceId` from the project; clients cannot choose those values independently. When listing tasks, add `projectId` to `GET /api/todo/AllTodos`; only members of that project's organization can list its tasks. Assignees on project tasks must also be organization members.
+The application hierarchy is `Organizations → Workspaces → Tasks`. To create a task directly inside a workspace, send `workspaceId` in the normal `POST /api/todo/addTodo` body. The API derives `organizationId` from the workspace; clients cannot choose the organization independently. When listing tasks, add `workspaceId` to `GET /api/todo/AllTodos`; every current member of that organization can see tasks in the selected workspace. Assignees on workspace tasks must also be organization members. Personal Todo lists and statistics exclude organization workspace tasks. The optional project-scoped API remains available for compatibility, but it is not part of the main frontend navigation.
 
-Base URL for personal and project task operations: `/api/todo`.
+Base URL for personal and workspace task operations: `/api/todo`.
 
 ## Todo and assignment endpoints
 
@@ -41,7 +41,7 @@ Base URL for personal and project task operations: `/api/todo`.
 | POST | `/addTodo` | Create todo |
 | GET | `/AllTodos` | List active todos with pagination/filter/sort |
 | GET | `/AllTodosUsers` | Admin: list active todos for all users |
-| GET | `/todo/:id` | Get one active owned todo |
+| GET | `/todo/:id` | Get one active personal todo or a workspace task accessible to the current member |
 | GET | `/AllTodoByTitle?title=...` | Search by title |
 | GET | `/AllTodoByStatus?status=...` | Filter by owner status |
 | GET | `/stats` | Active todo statistics |
@@ -81,17 +81,17 @@ A task can be submitted after all assigned teammates have completed their indivi
 
 Upload using `multipart/form-data` with the field name `attachments`. Send up to 5 files per request, 10 MB per file, and 20 files per task. Supported types: JPG, PNG, WEBP, PDF, TXT, CSV, DOC, DOCX, XLS, XLSX, PPT, PPTX, and ZIP.
 
-The task owner and assigned users can upload and view attachments. Only the task owner or the user who uploaded a specific file can delete it. Files are stored in Cloudinary; metadata (original name, secure URL, MIME type, size, uploader and upload date) is stored on the task document. The existing profile-image Multer configuration is kept separate and unchanged.
+Personal task owners and assignees can upload and view attachments. Current organization members can upload and view workspace task attachments. Only the task owner or the user who uploaded a specific file can delete it. Files are stored in Cloudinary; metadata (original name, secure URL, MIME type, size, uploader and upload date) is stored on the task document. The existing profile-image Multer configuration is kept separate and unchanged.
 
 ## Comments and activity
 
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/comments/:todoId` | Owner/assignee lists comments |
-| POST | `/comments/:todoId` | Owner/assignee adds comment |
+| GET | `/comments/:todoId` | Owner/assignee or workspace member lists comments |
+| POST | `/comments/:todoId` | Owner/assignee or workspace member adds comment |
 | PATCH | `/comments/:todoId/:commentId` | Author or owner edits comment |
 | DELETE | `/comments/:todoId/:commentId` | Author or owner deletes comment |
-| GET | `/activity/:id` | Owner/assignee reads activity history |
+| GET | `/activity/:id` | Owner/assignee or workspace member reads activity history |
 
 Comment body: `{ "text": "I have started working on this task." }`. Comment length: 1-2000 characters. Activity tracks creation, edits, assignment, unassignment, individual status changes, comments, attachments, soft deletion and restoration.
 
@@ -105,7 +105,7 @@ Normal lists and stats exclude trashed todos. Delete and clear operations set `d
 
 ## Query options
 
-`projectId` (optional; returns all tasks in a project the user can access), `page` (default 1), `limit` (1-100, default 10), `sortBy` (createdAt, updatedAt, deadline, title, status, priority), `order` (asc/desc), `status` (not-started/in-progress/done), `priority` (low/medium/high), `type` (task/todo), `category`, `search` (partial title), `overdue` (true/false). Dates use ISO 8601.
+`workspaceId` (optional; returns all tasks in a workspace the user can access), `projectId` (optional; legacy project filter), `page` (default 1), `limit` (1-100, default 10), `sortBy` (createdAt, updatedAt, deadline, title, status, priority), `order` (asc/desc), `status` (not-started/in-progress/done), `priority` (low/medium/high), `type` (task/todo), `category`, `search` (partial title), `overdue` (true/false). Dates use ISO 8601.
 
 Recurring todos are intentionally not included.
 

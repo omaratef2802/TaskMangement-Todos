@@ -4,17 +4,15 @@ const dbUser = require("../modules/dbUser");
 const ApiError = require("../utils/ApiError");
 const sendEmail = require("../utils/sendEmail");
 const { logTodoActivity } = require("./todoActivity");
-const { assertProjectAccess } = require("./organizations");
+const { assertProjectAccess, assertWorkspaceAccess } = require("./organizations");
 
-const getProjectVisibilityFilter = async (userId) => {
-  const Organization = require("../modules/dbOrganization");
-  const organizationIds = await Organization.find({ "members.userId": userId }).distinct("_id");
-  return { $or: [{ projectId: null }, { organizationId: { $in: organizationIds } }] };
-};
+const getProjectVisibilityFilter = async () => ({ organizationId: null });
 
 const ensureProjectMembership = async (todo, userId) => {
   const projectId = todo?.projectId?._id || todo?.projectId;
+  const workspaceId = todo?.workspaceId?._id || todo?.workspaceId;
   if (projectId) await assertProjectAccess(projectId, userId);
+  else if (workspaceId) await assertWorkspaceAccess(workspaceId, userId);
 };
 
 const editableFields = [
@@ -39,7 +37,7 @@ const allowedSortFields = [
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const getListOptions = (query = {}) => {
-  const stringFields = ["sortBy", "order", "status", "priority", "type", "category", "search", "overdue", "reviewStatus", "includeAssigned", "projectId"];
+  const stringFields = ["sortBy", "order", "status", "priority", "type", "category", "search", "overdue", "reviewStatus", "includeAssigned", "projectId", "workspaceId"];
   for (const field of stringFields) {
     if (query[field] !== undefined && typeof query[field] !== "string") {
       throw new ApiError(400, `Invalid ${field} query parameter`);
@@ -174,11 +172,18 @@ const createTodos = async (todo = {}, userId) => {
     throw new ApiError(400, "assignedUserIds must be an array");
   }
 
+  if (todo.projectId !== undefined && todo.workspaceId !== undefined) {
+    throw new ApiError(400, "Choose either a workspace or a project for this task");
+  }
   if (todo.projectId !== undefined) {
     const { project, org, workspace } = await assertProjectAccess(todo.projectId, userId);
     todoData.projectId = project._id;
     todoData.organizationId = org._id;
     todoData.workspaceId = workspace._id;
+  } else if (todo.workspaceId !== undefined) {
+    const { workspace, org } = await assertWorkspaceAccess(todo.workspaceId, userId);
+    todoData.workspaceId = workspace._id;
+    todoData.organizationId = org._id;
   }
 
   const assignedUserIds = [...new Set((todo.assignedUserIds || []).map((id) => String(id)))];
@@ -259,13 +264,14 @@ const getTodoByIdService = async (id, userId, isAdmin = false) => {
     .populate("userId", "fname lname username mail image")
     .populate("assignedTo", "fname lname username image")
     .populate("assignedStatuses.userId", "fname lname username image")
-    .populate("projectId", "name status workspaceId");
+    .populate("projectId", "name status workspaceId")
+    .populate("workspaceId", "name key organizationId");
   if (!todo) throw new ApiError(404, "Todo not found");
 
   const isParticipant = String(todo.userId?._id || todo.userId) === String(userId)
     || (todo.assignedTo || []).some((item) => String(item?._id || item) === String(userId));
   if (!isAdmin) {
-    if (todo.projectId?._id) await ensureProjectMembership(todo, userId);
+    if (todo.projectId?._id || todo.workspaceId) await ensureProjectMembership(todo, userId);
     else if (!isParticipant) throw new ApiError(404, "Todo not found");
   }
 
@@ -275,15 +281,22 @@ const getTodoByIdService = async (id, userId, isAdmin = false) => {
 const getTodosService = async (userId, query = {}) => {
   const options = getListOptions(query);
   const filter = { ...options.filter };
+  if (query.projectId !== undefined && query.workspaceId !== undefined) {
+    throw new ApiError(400, "Choose either a workspace or a project filter");
+  }
   if (query.projectId !== undefined) {
     const { project } = await assertProjectAccess(query.projectId, userId);
     filter.projectId = project._id;
   }
-  if (query.projectId && query.includeAssigned === "true") {
+  if (query.workspaceId !== undefined) {
+    const { workspace } = await assertWorkspaceAccess(query.workspaceId, userId);
+    filter.workspaceId = workspace._id;
+  }
+  if ((query.projectId || query.workspaceId) && query.includeAssigned === "true") {
     throw new ApiError(400, "includeAssigned cannot be combined with projectId");
   }
-  if (query.projectId) {
-    // Organization members can see every task in a project they can access.
+  if (query.projectId || query.workspaceId) {
+    // Organization members can see every task in the selected workspace or project.
   } else if (query.includeAssigned === "true") {
     const status = filter.status;
     delete filter.status;
@@ -321,7 +334,7 @@ const getTodosService = async (userId, query = {}) => {
     filter.userId = userId;
   }
 
-  if (!query.projectId) {
+  if (!query.projectId && !query.workspaceId) {
     filter.$and = [...(filter.$and || []), await getProjectVisibilityFilter(userId)];
   }
 
@@ -376,6 +389,7 @@ const getTodoCategoriesService = async (userId) => {
     {
       $match: {
         deletedAt: null,
+        organizationId: null,
         $or: [{ userId: new mongoose.Types.ObjectId(userId) }, { assignedTo: new mongoose.Types.ObjectId(userId) }],
       },
     },
@@ -398,6 +412,7 @@ const getTodoStatsService = async (userId) => {
       {
         $match: {
           deletedAt: null,
+          organizationId: null,
           $or: [{ userId: objectUserId }, { assignedTo: objectUserId }],
         },
       },
@@ -448,10 +463,11 @@ const getTodoStatsService = async (userId) => {
         },
       },
     ]),
-    dbTodo.countDocuments({ assignedTo: objectUserId, userId: { $ne: objectUserId }, deletedAt: null }),
-    dbTodo.countDocuments({ userId: objectUserId, assignedTo: { $exists: true, $ne: [] }, deletedAt: null }),
+    dbTodo.countDocuments({ assignedTo: objectUserId, userId: { $ne: objectUserId }, organizationId: null, deletedAt: null }),
+    dbTodo.countDocuments({ userId: objectUserId, assignedTo: { $exists: true, $ne: [] }, organizationId: null, deletedAt: null }),
     dbTodo.countDocuments({
       userId: objectUserId,
+      organizationId: null,
       deletedAt: null,
       $or: [{ assignedTo: { $exists: false } }, { assignedTo: { $size: 0 } }],
     }),

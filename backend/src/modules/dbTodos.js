@@ -66,6 +66,7 @@ todoSchema.index({ assignedTo: 1, createdAt: -1 });
 todoSchema.index({ deletedAt: 1, createdAt: -1 });
 todoSchema.index({ "assignedStatuses.userId": 1, createdAt: -1 });
 todoSchema.index({ projectId: 1, deletedAt: 1, createdAt: -1 });
+todoSchema.index({ workspaceId: 1, deletedAt: 1, createdAt: -1 });
 
 const todoModule = mongoose.model("todos", todoSchema);
 

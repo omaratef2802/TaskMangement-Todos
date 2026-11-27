@@ -4,7 +4,7 @@ const dbComment = require("../modules/dbTodoComment");
 const dbActivity = require("../modules/dbTodoActivity");
 const ApiError = require("../utils/ApiError");
 const { logTodoActivity } = require("./todoActivity");
-const { assertProjectAccess } = require("./organizations");
+const { assertProjectAccess, assertWorkspaceAccess } = require("./organizations");
 
 const pagination = (query = {}) => {
   const page = Number(query.page ?? 1), limit = Number(query.limit ?? 10);
@@ -19,10 +19,12 @@ const participantTodo = async (todoId, userId, includeDeleted = false) => {
   if (!mongoose.isValidObjectId(todoId)) throw new ApiError(400, "Invalid todo ID");
   const filter = { _id: todoId };
   if (!includeDeleted) filter.deletedAt = null;
-  const todo = await dbTodo.findOne(filter).select("_id userId projectId");
+  const todo = await dbTodo.findOne(filter).select("_id userId projectId workspaceId");
   if (!todo) throw new ApiError(404, "Todo not found");
   if (todo.projectId) {
     await assertProjectAccess(todo.projectId, userId);
+  } else if (todo.workspaceId) {
+    await assertWorkspaceAccess(todo.workspaceId, userId);
   } else if (String(todo.userId) !== String(userId)) {
     const assigned = await dbTodo.exists({ _id: todoId, assignedTo: userId });
     if (!assigned) throw new ApiError(404, "Todo not found");
