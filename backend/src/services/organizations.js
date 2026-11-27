@@ -36,6 +36,7 @@ const assertProjectAccess = async (projectId, userId) => {
 
 const listOrganizations = async (userId) => Organization.find({ "members.userId": userId })
   .populate("ownerId", "fname lname username image")
+  .populate("members.userId", "fname lname username mail image")
   .sort({ createdAt: -1 });
 
 const createOrganization = async (payload, userId) => {
@@ -85,6 +86,11 @@ const removeOrganizationMember = async (id, userId, memberId) => {
   if (!exists) throw new ApiError(404, "Organization member not found");
   org.members = org.members.filter((item) => String(item.userId) !== String(memberId));
   await org.save();
+  const Todo = require("../modules/dbTodos");
+  await Todo.updateMany(
+    { organizationId: org._id, assignedTo: memberId },
+    { $pull: { assignedTo: memberId, assignedStatuses: { userId: memberId } } },
+  );
   return org.populate("members.userId ownerId", "fname lname username mail image");
 };
 

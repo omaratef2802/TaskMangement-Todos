@@ -4,6 +4,7 @@ const cloudinary = require("../config/cloudinary");
 const uploadAttachment = require("../utils/uploadAttachment");
 const ApiError = require("../utils/ApiError");
 const { logTodoActivity } = require("./todoActivity");
+const { assertProjectAccess } = require("./organizations");
 
 const MAX_ATTACHMENTS_PER_TODO = 20;
 
@@ -12,13 +13,14 @@ const getAccessibleTodo = async (todoId, userId) => {
     throw new ApiError(400, "Invalid todo ID");
   }
 
-  const todo = await dbTodo.findOne({
-    _id: todoId,
-    deletedAt: null,
-    $or: [{ userId }, { assignedTo: userId }],
-  });
-
+  const todo = await dbTodo.findOne({ _id: todoId, deletedAt: null });
   if (!todo) throw new ApiError(404, "Todo not found");
+  if (todo.projectId) {
+    await assertProjectAccess(todo.projectId, userId);
+  } else if (String(todo.userId) !== String(userId)) {
+    const assigned = await dbTodo.exists({ _id: todoId, assignedTo: userId, deletedAt: null });
+    if (!assigned) throw new ApiError(404, "Todo not found");
+  }
   return todo;
 };
 
@@ -54,7 +56,7 @@ const addTodoAttachmentsService = async (todoId, userId, files = []) => {
 
   try {
     const updatedTodo = await dbTodo.findOneAndUpdate(
-      { _id: todoId, deletedAt: null, $or: [{ userId }, { assignedTo: userId }] },
+      { _id: todoId, deletedAt: null },
       { $push: { attachments: { $each: attachments } } },
       { new: true, runValidators: true },
     );

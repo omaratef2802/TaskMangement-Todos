@@ -1,6 +1,38 @@
 # Todo API
 
-JWT is sent directly in the `Authorization` header without the `Bearer` prefix. Base URL: `/api/todo`.
+JWT is sent directly in the `Authorization` header without the `Bearer` prefix.
+
+## Organizations, Workspaces, and Projects
+
+All endpoints below use the base URL `/api/organizations` and require authentication.
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/` | List organizations the current user belongs to |
+| POST | `/` | Create an organization; creator becomes owner |
+| GET | `/:organizationId` | Get organization details and members |
+| PATCH | `/:organizationId` | Update organization name/description (owner/admin) |
+| POST | `/:organizationId/members` | Add an existing registered user by email (owner/admin) |
+| DELETE | `/:organizationId/members/:userId` | Remove an organization member (owner/admin) |
+| GET | `/:organizationId/workspaces` | List workspaces in an organization |
+| POST | `/:organizationId/workspaces` | Create a workspace (owner/admin) |
+| PATCH | `/workspaces/:workspaceId` | Update workspace (owner/admin) |
+| DELETE | `/workspaces/:workspaceId` | Archive workspace (owner/admin) |
+| GET | `/workspaces/:workspaceId/projects` | List workspace projects |
+| POST | `/workspaces/:workspaceId/projects` | Create a project |
+| PATCH | `/projects/:projectId` | Update a project (creator or organization admin) |
+| DELETE | `/projects/:projectId` | Archive a project (creator or organization admin) |
+
+Organization creation body: `{ "name": "Engineering", "description": "Product engineering team" }`.
+Member addition body: `{ "email": "teammate@example.com", "role": "member" }`; role can be `admin` or `member`. Only existing registered accounts can be added.
+Workspace creation body: `{ "name": "Backend", "key": "BACK", "description": "Backend engineering" }`; key is optional and is generated from the name when omitted.
+Project creation body: `{ "name": "TaskFlow API", "description": "Project description", "dueDate": "2026-12-31T00:00:00.000Z" }`.
+
+Every organization member can access its workspaces and projects. Organization owners/admins manage members and workspaces. Project creators and organization admins can update or archive projects. Removing a member also removes their assignments from that organization's tasks. Project task detail, comments, activity, and attachments require current organization membership.
+
+To create a task inside a project, send `projectId` in the normal `POST /api/todo/addTodo` body. The API derives `organizationId` and `workspaceId` from the project; clients cannot choose those values independently. When listing tasks, add `projectId` to `GET /api/todo/AllTodos`; only members of that project's organization can list its tasks. Assignees on project tasks must also be organization members.
+
+Base URL for personal and project task operations: `/api/todo`.
 
 ## Todo and assignment endpoints
 
@@ -73,7 +105,7 @@ Normal lists and stats exclude trashed todos. Delete and clear operations set `d
 
 ## Query options
 
-`page` (default 1), `limit` (1-100, default 10), `sortBy` (createdAt, updatedAt, deadline, title, status, priority), `order` (asc/desc), `status` (not-started/in-progress/done), `priority` (low/medium/high), `type` (task/todo), `category`, `search` (partial title), `overdue` (true/false). Dates use ISO 8601.
+`projectId` (optional; returns all tasks in a project the user can access), `page` (default 1), `limit` (1-100, default 10), `sortBy` (createdAt, updatedAt, deadline, title, status, priority), `order` (asc/desc), `status` (not-started/in-progress/done), `priority` (low/medium/high), `type` (task/todo), `category`, `search` (partial title), `overdue` (true/false). Dates use ISO 8601.
 
 Recurring todos are intentionally not included.
 

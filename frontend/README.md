@@ -1,6 +1,6 @@
 # TaskFlow — Angular Frontend
 
-A standalone Angular 22 frontend for the Todos API. This branch is based on `main` and contains frontend files only; backend implementation remains on its own branch.
+A standalone Angular 22 frontend for the integrated TaskFlow application. The `main` branch contains both frontend and backend.
 
 ## Requirements
 - Node.js 24+
@@ -34,6 +34,14 @@ If the frontend runs on a different origin, configure the backend `CLIENT_URL` t
 - Authenticated routes and admin-only route protection
 - JWT sent in the `Authorization` header without the `Bearer` prefix
 
+### Organizations and workspaces
+- Create and manage organizations
+- Add registered users as organization members
+- Create multiple workspaces inside an organization
+- Create and manage projects inside a workspace
+- Open a project's task list; new tasks created from that view are attached to the project
+- Organization membership is checked by the backend for project and task access
+
 ### Workspace
 - Dashboard statistics and recent tasks
 - My tasks, Assigned to me, Assigned by me
@@ -54,7 +62,7 @@ If the frontend runs on a different origin, configure the backend `CLIENT_URL` t
 - Responsive desktop and mobile layout
 
 ## Backend contract
-The UI uses the backend routes under `/api/user`, `/api/todo` and `/api/notifications`. The API service is the single place for request definitions. Multipart uploads deliberately let the browser set the multipart content type and boundary.
+The UI uses the backend routes under `/api/user`, `/api/todo`, `/api/organizations` and `/api/notifications`. The API service is the single place for request definitions. Multipart uploads deliberately let the browser set the multipart content type and boundary.
 
 The calendar is a frontend view built from task deadlines; the backend does not expose a separate calendar endpoint.
 
@@ -63,7 +71,7 @@ The calendar is a frontend view built from task deadlines; the backend does not 
 npm run build
 ```
 
-The repository GitHub Actions workflow also builds this frontend on pushes to the frontend branch.
+The repository GitHub Actions workflow also builds this frontend on pushes to `main`.
 
 ## Branch separation
 This branch contains the frontend implementation independently. It is not merged into `Backend-omaratef` or `main`. Integration should happen only after the frontend and backend are reviewed together.

@@ -6,6 +6,12 @@ const sendEmail = require("../utils/sendEmail");
 const { logTodoActivity } = require("./todoActivity");
 const { assertProjectAccess } = require("./organizations");
 
+const getProjectVisibilityFilter = async (userId) => {
+  const Organization = require("../modules/dbOrganization");
+  const organizationIds = await Organization.find({ "members.userId": userId }).distinct("_id");
+  return { $or: [{ projectId: null }, { organizationId: { $in: organizationIds } }] };
+};
+
 const editableFields = [
   "type",
   "title",
@@ -252,9 +258,9 @@ const getTodoByIdService = async (id, userId, isAdmin = false) => {
 
   const isParticipant = String(todo.userId?._id || todo.userId) === String(userId)
     || (todo.assignedTo || []).some((item) => String(item?._id || item) === String(userId));
-  if (!isAdmin && !isParticipant) {
-    if (!todo.projectId?._id) throw new ApiError(404, "Todo not found");
-    await assertProjectAccess(todo.projectId._id, userId);
+  if (!isAdmin) {
+    if (todo.projectId?._id) await assertProjectAccess(todo.projectId._id, userId);
+    else if (!isParticipant) throw new ApiError(404, "Todo not found");
   }
 
   return todo;
@@ -307,6 +313,10 @@ const getTodosService = async (userId, query = {}) => {
     if (conditions.length) filter.$and = conditions;
   } else {
     filter.userId = userId;
+  }
+
+  if (!query.projectId) {
+    filter.$and = [...(filter.$and || []), await getProjectVisibilityFilter(userId)];
   }
 
   const [todos, total] = await Promise.all([
@@ -589,6 +599,7 @@ const getAssignedToMeService = async (userId, query = {}) => {
     });
   }
   if (conditions.length) filter.$and = conditions;
+  filter.$and = [...(filter.$and || []), await getProjectVisibilityFilter(userId)];
 
   const [todos, total] = await Promise.all([
     dbTodo.find(filter)
@@ -615,6 +626,7 @@ const getAssignedToMeService = async (userId, query = {}) => {
 const getAssignedByMeService = async (userId, query = {}) => {
   const options = getListOptions(query);
   const filter = { ...options.filter, userId, assignedTo: { $exists: true, $ne: [] }, deletedAt: null };
+  filter.$and = [...(filter.$and || []), await getProjectVisibilityFilter(userId)];
 
   const [todos, total] = await Promise.all([
     dbTodo.find(filter)
