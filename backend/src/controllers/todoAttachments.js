@@ -2,7 +2,7 @@ const {
   addTodoAttachmentsService,
   deleteTodoAttachmentService,
 } = require("../services/todoAttachments");
-const { emitTodoChanged } = require("../services/notifications");
+const { notifyTodoParticipants } = require("../services/notifications");
 
 const uploadTodoAttachments = async (req, res, next) => {
   try {
@@ -11,7 +11,11 @@ const uploadTodoAttachments = async (req, res, next) => {
       req.id,
       req.files,
     );
-    await emitTodoChanged(req.params.id, req.id, "attachments_updated");
+    await notifyTodoParticipants(req.params.id, req.id, {
+      type: "attachment_added",
+      title: "Task attachment added",
+      message: "A new file was added to a task you participate in.",
+    });
     res.status(201).json({
       message: "Attachments uploaded successfully",
       data: attachments,
@@ -28,7 +32,11 @@ const deleteTodoAttachment = async (req, res, next) => {
       req.params.attachmentId,
       req.id,
     );
-    await emitTodoChanged(req.params.id, req.id, "attachment_deleted");
+    await notifyTodoParticipants(req.params.id, req.id, {
+      type: "attachment_deleted",
+      title: "Task attachment removed",
+      message: "A file was removed from a task you participate in.",
+    });
     res.status(200).json(result);
   } catch (error) {
     next(error);
