@@ -12,6 +12,17 @@ const getProjectVisibilityFilter = async (userId) => {
   return { $or: [{ projectId: null }, { organizationId: { $in: organizationIds } }] };
 };
 
+const ensureProjectMembership = async (todo, userId) => {
+  const projectId = todo?.projectId?._id || todo?.projectId;
+  if (projectId) await assertProjectAccess(projectId, userId);
+};
+
+const getProjectVisibilityFilter = async (userId) => {
+  const Organization = require("../modules/dbOrganization");
+  const organizationIds = await Organization.find({ "members.userId": userId }).distinct("_id");
+  return { $or: [{ projectId: null }, { organizationId: { $in: organizationIds } }] };
+};
+
 const editableFields = [
   "type",
   "title",
@@ -225,6 +236,7 @@ const getTodoByTitleService = async (title, userId) => {
     userId,
     deletedAt: null,
     title: { $regex: escapeRegex(title.trim()), $options: "i" },
+    $and: [await getProjectVisibilityFilter(userId)],
   }).populate("assignedTo", "fname lname username image")
       .populate("assignedStatuses.userId", "fname lname username image")
     .sort({ createdAt: -1 });
@@ -238,7 +250,7 @@ const getTodoByStatusService = async (status, userId) => {
     throw new ApiError(400, "Invalid todo status");
   }
 
-  return await dbTodo.find({ status, userId, deletedAt: null })
+  return await dbTodo.find({ status, userId, deletedAt: null, $and: [await getProjectVisibilityFilter(userId)] })
     .populate("assignedTo", "fname lname username image")
       .populate("assignedStatuses.userId", "fname lname username image")
     .sort({ createdAt: -1 });
@@ -259,7 +271,7 @@ const getTodoByIdService = async (id, userId, isAdmin = false) => {
   const isParticipant = String(todo.userId?._id || todo.userId) === String(userId)
     || (todo.assignedTo || []).some((item) => String(item?._id || item) === String(userId));
   if (!isAdmin) {
-    if (todo.projectId?._id) await assertProjectAccess(todo.projectId._id, userId);
+    if (todo.projectId?._id) await ensureProjectMembership(todo, userId);
     else if (!isParticipant) throw new ApiError(404, "Todo not found");
   }
 
@@ -491,6 +503,15 @@ const assignTodoService = async (id, ownerId, userIds) => {
 
   const todo = await dbTodo.findOne({ _id: id, userId: ownerId, deletedAt: null });
   if (!todo) throw new ApiError(404, "Todo not found");
+  await ensureProjectMembership(todo, ownerId);
+  if (todo.organizationId) {
+    const Organization = require("../modules/dbOrganization");
+    const organization = await Organization.findOne({
+      _id: todo.organizationId,
+      "members.userId": { $all: normalizedIds },
+    }).select("_id");
+    if (!organization) throw new ApiError(403, "All assignees must belong to this organization");
+  }
 
   const users = await dbUser.find({ _id: { $in: normalizedIds } }).select("_id fname lname mail");
   if (users.length !== normalizedIds.length) {
@@ -563,6 +584,10 @@ const unassignTodoService = async (id, ownerId, userId) => {
   if (typeof userId !== "string" || !mongoose.isValidObjectId(userId)) {
     throw new ApiError(400, "Invalid user ID");
   }
+
+  const currentTodo = await dbTodo.findOne({ _id: id, userId: ownerId, assignedTo: userId, deletedAt: null });
+  if (!currentTodo) throw new ApiError(404, "Todo not found or user is not assigned");
+  await ensureProjectMembership(currentTodo, ownerId);
 
   const todo = await dbTodo.findOneAndUpdate(
     { _id: id, userId: ownerId, assignedTo: userId, deletedAt: null },
@@ -709,6 +734,7 @@ const updateAssignedTodoStatusService = async (id, assigneeId, status) => {
 
   const current = await dbTodo.findOne({ _id: id, assignedTo: assigneeId, deletedAt: null });
   if (!current) throw new ApiError(404, "Assigned todo not found");
+  await ensureProjectMembership(current, assigneeId);
   if (["pending", "approved"].includes(current.reviewStatus)) {
     throw new ApiError(403, "Your progress is locked while the task is under review or approved");
   }
@@ -738,6 +764,7 @@ const submitTodoForReviewService = async (id, assigneeId) => {
   if (!mongoose.isValidObjectId(id)) throw new ApiError(400, "Invalid todo ID");
   const current = await dbTodo.findOne({ _id: id, assignedTo: assigneeId, deletedAt: null });
   if (!current) throw new ApiError(404, "Assigned todo not found");
+  await ensureProjectMembership(current, assigneeId);
   const assignedStatus = current.assignedStatuses.find((entry) => String(entry.userId) === String(assigneeId));
   if (!assignedStatus || assignedStatus.status !== "done") throw new ApiError(400, "Complete your assigned task before submitting it for review");
   const allAssigneesCompleted = current.assignedTo.every((assignedId) =>
@@ -766,8 +793,9 @@ const reviewTodoService = async (id, reviewerId, decision, note = "", isAdmin = 
   if (decision === "changes-requested" && !note.trim()) throw new ApiError(400, "Please provide a reason for the requested changes");
 
   const accessFilter = { _id: id, ...(isAdmin ? {} : { userId: reviewerId }), deletedAt: null };
-  const current = await dbTodo.findOne(accessFilter).select("reviewStatus");
+  const current = await dbTodo.findOne(accessFilter).select("reviewStatus projectId");
   if (!current) throw new ApiError(404, "Task not found or you cannot review it");
+  await ensureProjectMembership(current, reviewerId);
   if (decision === "approved" && current.reviewStatus !== "pending") {
     throw new ApiError(400, "Only a task waiting for review can be approved");
   }
@@ -802,6 +830,9 @@ const reviewTodoService = async (id, reviewerId, decision, note = "", isAdmin = 
 
 const deleteTodoService = async (id, userId) => {
   if (!mongoose.isValidObjectId(id)) throw new ApiError(400, "Invalid todo ID");
+  const current = await dbTodo.findOne({ _id: id, userId, deletedAt: null });
+  if (!current) throw new ApiError(404, "Todo not found");
+  await ensureProjectMembership(current, userId);
   const todo = await dbTodo.findOneAndUpdate(
     { _id: id, userId, deletedAt: null },
     { $set: { deletedAt: new Date() } },
@@ -813,15 +844,16 @@ const deleteTodoService = async (id, userId) => {
 };
 
 const clearTodosService = async (userId) => {
-  const todos = await dbTodo.find({ userId, deletedAt: null }).select("_id");
-  const result = await dbTodo.updateMany({ userId, deletedAt: null }, { $set: { deletedAt: new Date() } });
+  const filter = { userId, deletedAt: null, $and: [await getProjectVisibilityFilter(userId)] };
+  const todos = await dbTodo.find(filter).select("_id");
+  const result = await dbTodo.updateMany(filter, { $set: { deletedAt: new Date() } });
   await Promise.all(todos.map((todo) => logTodoActivity(todo._id, userId, "soft_deleted")));
   return result;
 };
 
 const getDeletedTodosService = async (userId, query = {}) => {
   const options = getListOptions(query);
-  const filter = { ...options.filter, userId, deletedAt: { $ne: null } };
+  const filter = { ...options.filter, userId, deletedAt: { $ne: null }, $and: [await getProjectVisibilityFilter(userId)] };
   const [todos, total] = await Promise.all([
     dbTodo.find(filter).populate("assignedTo", "fname lname username image")
       .sort(options.sort).skip(options.skip).limit(options.limit),
@@ -832,6 +864,9 @@ const getDeletedTodosService = async (userId, query = {}) => {
 
 const restoreTodoService = async (id, userId) => {
   if (!mongoose.isValidObjectId(id)) throw new ApiError(400, "Invalid todo ID");
+  const current = await dbTodo.findOne({ _id: id, userId, deletedAt: { $ne: null } });
+  if (!current) throw new ApiError(404, "Deleted todo not found");
+  await ensureProjectMembership(current, userId);
   const todo = await dbTodo.findOneAndUpdate(
     { _id: id, userId, deletedAt: { $ne: null } },
     { $set: { deletedAt: null } },
@@ -846,6 +881,7 @@ const permanentlyDeleteTodoService = async (id, userId) => {
   if (!mongoose.isValidObjectId(id)) throw new ApiError(400, "Invalid todo ID");
   const todo = await dbTodo.findOne({ _id: id, userId, deletedAt: { $ne: null } });
   if (!todo) throw new ApiError(404, "Deleted todo not found");
+  await ensureProjectMembership(todo, userId);
 
   const cloudinary = require("../config/cloudinary");
   await Promise.allSettled(
@@ -894,6 +930,7 @@ const updateTodoService = async (id, userId, data = {}, isAdmin = false) => {
 
   const currentTodo = await dbTodo.findOne({ _id: id, ...(isAdmin ? {} : { userId }), deletedAt: null });
   if (!currentTodo) throw new ApiError(404, "Todo not found");
+  await ensureProjectMembership(currentTodo, userId);
 
   if (updateData.status === "done") {
     updateData.completedAt = currentTodo.completedAt || new Date();
