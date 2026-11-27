@@ -40,8 +40,8 @@
           <b>{{ task.title }}</b>
           <p>{{ task.description || 'No description added' }}</p>
           <small>
-            <span>Owner: {{ ownerName(task) }}</span>
-            <span>{{ task.assignedTo?.length || 0 }} assignee(s)</span>
+            <span class="review-owner"><app-user-avatar [user]="ownerUser(task)" size="25px"></app-user-avatar>Owner: {{ ownerName(task) }}</span>
+            <span class="review-assignees">@for(user of task.assignedTo?.slice(0,3)||[];track user._id){<app-user-avatar [user]="user" size="23px"></app-user-avatar>}{{ task.assignedTo?.length || 0 }} assignee(s)</span>
             <span>Submitted {{ task.submittedAt ? (task.submittedAt | date:'mediumDate') : 'recently' }}</span>
           </small>
         </a>

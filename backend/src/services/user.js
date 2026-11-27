@@ -6,6 +6,7 @@ const ApiError = require("../utils/ApiError");
 const sendEmail = require("../utils/sendEmail");
 const dbOtp = require("../modules/dbOTP");
 const uploadImage = require("../utils/uploadImage");
+const { emitToAll } = require("../config/socket");
 
 const createUser = async (info) => {
   const user = await dbUser.create(info);
@@ -227,6 +228,7 @@ const uploadUserImage = async (id, file) => {
   );
 
   if (!updatedUser) throw new ApiError(404, "User not found");
+  emitToAll("profile:updated", { userId: String(updatedUser._id), image: updatedUser.image });
   return updatedUser;
 };
 

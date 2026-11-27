@@ -38,4 +38,6 @@ const emitToUser = (userId, event, payload) => {
   if (io && userId) io.to(`user:${String(userId)}`).emit(event, payload);
 };
 
-module.exports = { initSocket, getIO, emitToUser };
+const emitToAll = (event, payload) => { if (io) io.emit(event, payload); };
+
+module.exports = { initSocket, getIO, emitToUser, emitToAll };

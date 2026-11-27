@@ -3,15 +3,16 @@ import {Component,OnInit,inject,signal} from '@angular/core';
 import {ActivatedRoute,RouterLink} from '@angular/router';
 import {ApiService} from './core/api.service';
 import {Organization,Workspace} from './core/models';
+import {UserAvatarComponent} from './core/user-avatar.component';
 
-@Component({standalone:true,selector:'app-organization-detail',imports:[CommonModule,RouterLink],template:`
+@Component({standalone:true,selector:'app-organization-detail',imports:[CommonModule,RouterLink,UserAvatarComponent],template:`
 <div class="org-detail">
  <a class="back-link" routerLink="/app/organizations"><i class="bi bi-arrow-left"></i> All organizations</a>
  @if(error()){<div class="alert-error">{{error()}}</div>}
  @if(loading()){<div class="surface empty-state">Loading organization…</div>}
  @else if(organization();as org){
   <header class="org-header surface"><span class="org-icon"><i class="bi bi-building"></i></span><div class="org-copy"><span class="eyebrow">ORGANIZATION</span><h1>{{org.name}}</h1><p class="muted">{{org.description||'Manage your team workspaces and tasks.'}}</p></div><span class="member-count"><i class="bi bi-people"></i> {{org.members.length}} members</span></header>
-  <section class="surface members-panel"><div class="section-heading"><div><h2>Members</h2><p class="muted">People who can access this organization and its workspaces.</p></div></div><div class="invite-row"><input type="email" [value]="email()" (input)="email.set($any($event.target).value)" placeholder="Add an existing user's email"><button class="btn-secondary" [disabled]="saving()" (click)="addMember()">Add member</button></div><div class="member-list">@for(member of org.members;track member.userId){<div class="member"><span class="member-avatar">{{initials(member.userId)}}</span><span><b>{{label(member.userId)}}</b><small>{{emailLabel(member.userId)}}</small></span><em>{{member.role}}</em></div>}</div></section>
+  <section class="surface members-panel"><div class="section-heading"><div><h2>Members</h2><p class="muted">People who can access this organization and its workspaces.</p></div></div><div class="invite-row"><input type="email" [value]="email()" (input)="email.set($any($event.target).value)" placeholder="Add an existing user's email"><button class="btn-secondary" [disabled]="saving()" (click)="addMember()">Add member</button></div><div class="member-list">@for(member of org.members;track member.userId){<div class="member"><app-user-avatar [user]="memberUser(member.userId)" size="32px"></app-user-avatar><span><b>{{label(member.userId)}}</b><small>{{emailLabel(member.userId)}}</small></span><em>{{member.role}}</em></div>}</div></section>
   <section class="workspace-section"><div class="section-heading"><div><span class="eyebrow">ORGANIZATION WORKSPACE</span><h2>Workspaces</h2><p class="muted">Each workspace contains its own tasks and team activity.</p></div><span class="count">{{workspaces().length}}</span></div>
    <div class="surface create-workspace"><input [value]="workspaceName()" (input)="workspaceName.set($any($event.target).value)" placeholder="Workspace name"><input class="key-input" [value]="workspaceKey()" (input)="workspaceKey.set($any($event.target).value.toUpperCase())" placeholder="KEY"><button class="btn-primary" [disabled]="saving()" (click)="createWorkspace()">Create workspace</button></div>
    @if(!workspaces().length){<div class="surface empty-state"><i class="bi bi-grid-1x2"></i><h3>No workspaces yet</h3><p>Create the first workspace for this organization.</p></div>}
@@ -33,5 +34,5 @@ export class OrganizationDetailComponent implements OnInit{
  createWorkspace():void{if(this.workspaceName().trim().length<2)return;this.saving.set(true);this.api.createWorkspace(this.organizationId,{name:this.workspaceName().trim(),key:this.workspaceKey().trim()||undefined}).subscribe({next:()=>{this.workspaceName.set('');this.workspaceKey.set('');this.saving.set(false);this.load();},error:e=>{this.error.set(e.error?.message||'Could not create workspace.');this.saving.set(false);}});}
  label(value:unknown):string{const u=value as any;return u&&typeof u==='object'?[u.fname,u.lname].filter(Boolean).join(' '):'Organization member';}
  emailLabel(value:unknown):string{const u=value as any;return u&&typeof u==='object'?u.mail||'':'';}
- initials(value:unknown):string{const u=value as any;return u&&typeof u==='object'?((u.fname?.[0]||'')+(u.lname?.[0]||'')).toUpperCase():'M';}
+ memberUser(value:unknown):any{return value&&typeof value==='object'?value:null;}
 }

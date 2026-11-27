@@ -3,12 +3,13 @@ import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { RouterLink } from '@angular/router';
 import { ApiService } from './core/api.service';
-import { Todo } from './core/models';
+import { Todo,User } from './core/models';
+import { UserAvatarComponent } from './core/user-avatar.component';
 
 @Component({
   standalone: true,
   selector: 'app-review-queue',
-  imports: [CommonModule, DatePipe, RouterLink],
+  imports: [CommonModule, DatePipe, RouterLink, UserAvatarComponent],
   templateUrl: './review-queue.component.html'
 })
 export class ReviewQueueComponent implements OnInit, OnDestroy {
@@ -43,6 +44,8 @@ export class ReviewQueueComponent implements OnInit, OnDestroy {
       }
     });
   }
+
+  ownerUser(todo:Todo):User|null{return todo.userId&&typeof todo.userId!=='string'?todo.userId:null;}
 
   ownerName(todo: Todo): string {
     const owner = todo.userId;
