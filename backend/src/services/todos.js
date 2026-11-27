@@ -17,12 +17,6 @@ const ensureProjectMembership = async (todo, userId) => {
   if (projectId) await assertProjectAccess(projectId, userId);
 };
 
-const getProjectVisibilityFilter = async (userId) => {
-  const Organization = require("../modules/dbOrganization");
-  const organizationIds = await Organization.find({ "members.userId": userId }).distinct("_id");
-  return { $or: [{ projectId: null }, { organizationId: { $in: organizationIds } }] };
-};
-
 const editableFields = [
   "type",
   "title",
