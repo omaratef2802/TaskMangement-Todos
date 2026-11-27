@@ -284,6 +284,26 @@ const getAllTodosService = async (query = {}) => {
   };
 };
 
+const getTodoCategoriesService = async (userId) => {
+  return await dbTodo.aggregate([
+    {
+      $match: {
+        deletedAt: null,
+        $or: [{ userId: new mongoose.Types.ObjectId(userId) }, { assignedTo: new mongoose.Types.ObjectId(userId) }],
+      },
+    },
+    {
+      $group: {
+        _id: { $trim: { input: { $ifNull: ["$category", "general"] } } },
+        count: { $sum: 1 },
+      },
+    },
+    { $match: { _id: { $ne: "" } } },
+    { $sort: { _id: 1 } },
+    { $project: { _id: 0, name: "$_id", count: 1 } },
+  ]);
+};
+
 const getTodoStatsService = async (userId) => {
   const [
     total,
@@ -739,6 +759,7 @@ module.exports = {
   getTodosService,
   getAllTodosService,
   getTodoStatsService,
+  getTodoCategoriesService,
   assignTodoService,
   unassignTodoService,
   getAssignedToMeService,
