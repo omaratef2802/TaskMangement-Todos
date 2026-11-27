@@ -14,7 +14,7 @@ const uploadTodoAttachments = async (req, res, next) => {
     await notifyTodoParticipants(req.params.id, req.id, {
       type: "attachment_added",
       title: "Task attachment added",
-      message: `New file(s) added: ${attachments.map((file) => file.name).join(", ").slice(0, 400)}` ,
+      message: `New file(s) added: ${attachments.map((file) => file.name).join(", ").slice(0, 400)}`,
     });
     res.status(201).json({
       message: "Attachments uploaded successfully",
